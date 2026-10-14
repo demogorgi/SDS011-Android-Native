@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -28,6 +29,8 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +70,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private SharedPreferences preferences;
     private BluetoothAdapter bluetoothAdapter;
     private SensorConnection connection;
+    private LocationManager locationManager;
     private ArrayAdapter<String> deviceAdapter;
     private Spinner deviceSpinner;
     private TextView connectionText;
@@ -80,6 +84,8 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private TextView gpsText;
     private TextView uploadText;
     private EditText sensorIdInput;
+    private EditText sensorLatitudeInput;
+    private EditText sensorLongitudeInput;
     private DustChartView chartView;
     private Button connectButton;
     private Button disconnectButton;
@@ -114,6 +120,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         model.setIntervalSeconds(preferredInterval());
         pendingMode = preferredMode();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         connection = new SensorConnection(this);
         connection.setSilenceTimeoutMillis(SENSOR_SILENCE_TIMEOUT_MS);
         setContentView(buildContent());
@@ -143,7 +150,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             loadDevices();
         } else if (requestCode == REQ_LOCATION) {
             if (hasLocationPermission()) {
-                Toast.makeText(this, "Standortzugriff erteilt. Messfahrt erneut starten.",
+                Toast.makeText(this, "Standortzugriff erteilt. Messung erneut starten.",
                         Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Ohne Standortberechtigung keine GPS-Spur.",
@@ -357,9 +364,32 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         sensorIdInput.setText(preferences.getString("sensor_community_id", ""));
         sensorIdInput.setHint("sensor.community Sensor-ID (X-Sensor)");
         card.addView(sensorIdInput, matchWrap());
+        sensorLatitudeInput = new EditText(this);
+        sensorLatitudeInput.setSingleLine(true);
+        sensorLatitudeInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER
+                | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+        sensorLatitudeInput.setText(preferences.getString("sensor_latitude", ""));
+        sensorLatitudeInput.setHint("Sensorstandort: Breitengrad");
+        card.addView(sensorLatitudeInput, matchWrap());
+        sensorLongitudeInput = new EditText(this);
+        sensorLongitudeInput.setSingleLine(true);
+        sensorLongitudeInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER
+                | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+        sensorLongitudeInput.setText(preferences.getString("sensor_longitude", ""));
+        sensorLongitudeInput.setHint("Sensorstandort: Längengrad");
+        card.addView(sensorLongitudeInput, matchWrap());
+        TextView sensorLocationHelp = text(
+                "Koordinaten des bei sensor.community registrierten Standorts. "
+                        + "Sie werden lokal gespeichert und nicht mit dem Upload gesendet.",
+                12, Typeface.NORMAL, MUTED);
+        card.addView(sensorLocationHelp);
         uploadText = text("Stationärmodus sendet Werte öffentlich an sensor.community",
                 13, Typeface.NORMAL, MUTED);
         card.addView(uploadText);
+        addCoordinatePreference(sensorLatitudeInput, "sensor_latitude");
+        addCoordinatePreference(sensorLongitudeInput, "sensor_longitude");
 
         LinearLayout actions = row();
         startButton = button("Start");
@@ -567,18 +597,51 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                     AppModel.POWER_SAVE_MIN_INTERVAL).apply();
         }
         String sensorId = sensorIdInput.getText().toString().trim();
+        Double sensorLatitude = parseCoordinate(sensorLatitudeInput.getText().toString());
+        Double sensorLongitude = parseCoordinate(sensorLongitudeInput.getText().toString());
         if (pendingMode == MeasurementMode.STATIONARY
                 && !sensorId.matches("[A-Za-z0-9_-]{4,128}")) {
             Toast.makeText(this, "Für Uploads eine gültige sensor.community Sensor-ID eintragen.",
                     Toast.LENGTH_LONG).show();
             return;
         }
-        preferences.edit().putString("sensor_community_id", sensorId).apply();
-        if (pendingMode == MeasurementMode.TRIP && !hasLocationPermission()) {
+        if (pendingMode == MeasurementMode.STATIONARY
+                && (sensorLatitude == null || sensorLongitude == null)) {
+            Toast.makeText(this, "Für den Stationärmodus gültigen Sensorstandort "
+                    + "(Breiten- und Längengrad) eintragen.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (pendingMode == MeasurementMode.STATIONARY
+                && (Math.abs(sensorLatitude) > 90.0 || Math.abs(sensorLongitude) > 180.0)) {
+            Toast.makeText(this, "Breitengrad muss zwischen -90 und 90, "
+                    + "Längengrad zwischen -180 und 180 liegen.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (pendingMode == MeasurementMode.STATIONARY || pendingMode == MeasurementMode.TRIP) {
+            if (!hasLocationPermission()) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
             return;
+            }
         }
+        if (pendingMode == MeasurementMode.STATIONARY) {
+            Location fix = stationaryLocationFix();
+            if (fix != null) {
+                float[] distance = new float[1];
+                Location.distanceBetween(fix.getLatitude(), fix.getLongitude(),
+                        sensorLatitude, sensorLongitude, distance);
+                if (distance[0] > 500.0f) {
+                    Toast.makeText(this, String.format(Locale.GERMANY,
+                            "Zu weit vom registrierten Sensorstandort entfernt (%.0f m).",
+                            distance[0]), Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+        }
+        preferences.edit().putString("sensor_community_id", sensorId)
+                .putString("sensor_latitude", sensorLatitudeInput.getText().toString().trim())
+                .putString("sensor_longitude", sensorLongitudeInput.getText().toString().trim())
+                .apply();
         try {
             File file = recorder.start(this, pendingMode);
             recordingActive = true;
@@ -589,7 +652,8 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             return;
         }
         model.setMode(pendingMode);
-        startMeasurementForegroundService(pendingMode == MeasurementMode.TRIP);
+        startMeasurementForegroundService(pendingMode == MeasurementMode.TRIP
+                || pendingMode == MeasurementMode.STATIONARY);
         applySensorInterval();
         updateUi();
     }
@@ -780,6 +844,68 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                 == PackageManager.PERMISSION_GRANTED
                 || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void addCoordinatePreference(final EditText input, final String key) {
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                preferences.edit().putString(key, s.toString()).apply();
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+    }
+
+    private Double parseCoordinate(String value) {
+        try {
+            double coordinate = Double.parseDouble(value.trim().replace(',', '.'));
+            return Double.isNaN(coordinate) || Double.isInfinite(coordinate)
+                    ? null : coordinate;
+        } catch (NumberFormatException exc) {
+            return null;
+        }
+
+        private Location stationaryLocationFix() {
+            Location location = freshLocation();
+            if (location != null || locationManager == null || !hasLocationPermission()) {
+                return location;
+            }
+            Location gps = null;
+            Location network = null;
+            try {
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                }
+            } catch (SecurityException ignored) {
+                gps = null;
+            }
+            try {
+                network = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            } catch (SecurityException ignored) {
+                network = null;
+            }
+            if (gps == null) {
+                location = network;
+            } else if (network == null || gps.getElapsedRealtimeNanos()
+                    >= network.getElapsedRealtimeNanos()) {
+                location = gps;
+            } else {
+                location = network;
+            }
+            if (location != null && SystemClock.elapsedRealtimeNanos()
+                    - location.getElapsedRealtimeNanos() <= GPS_MAX_AGE_MS * 1000000L) {
+                return location;
+            }
+            return null;
+        }
     }
 
     private void startMeasurementForegroundService(boolean trackLocation) {
