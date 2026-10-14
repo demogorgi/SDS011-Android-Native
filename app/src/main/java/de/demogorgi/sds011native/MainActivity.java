@@ -6,6 +6,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -39,8 +43,11 @@ import de.demogorgi.sds011native.sds.Sds011Protocol;
 import de.demogorgi.sds011native.sds.SensorConnection;
 import de.demogorgi.sds011native.ui.DustChartView;
 
-public final class MainActivity extends Activity implements SensorConnection.Listener {
+public final class MainActivity extends Activity
+        implements SensorConnection.Listener, LocationListener {
     private static final int REQ_BLUETOOTH = 1001;
+    private static final int REQ_LOCATION = 1002;
+    private static final long GPS_MAX_AGE_MS = 15000L;
     private static final int BG = Color.rgb(244, 244, 242);
     private static final int SURFACE = Color.WHITE;
     private static final int TEXT = Color.rgb(20, 20, 18);
@@ -57,6 +64,8 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private SharedPreferences preferences;
     private BluetoothAdapter bluetoothAdapter;
     private SensorConnection connection;
+    private LocationManager locationManager;
+    private Location latestLocation;
     private ArrayAdapter<String> deviceAdapter;
     private Spinner deviceSpinner;
     private TextView connectionText;
@@ -67,6 +76,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private TextView pointsText;
     private TextView intervalText;
     private TextView recordingText;
+    private TextView gpsText;
     private DustChartView chartView;
     private Button connectButton;
     private Button disconnectButton;
@@ -101,6 +111,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         model.setIntervalSeconds(preferredInterval());
         pendingMode = preferredMode();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         connection = new SensorConnection(this);
         setContentView(buildContent());
         ensureBluetoothPermission();
@@ -126,6 +137,15 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_BLUETOOTH) {
             loadDevices();
+        } else if (requestCode == REQ_LOCATION) {
+            if (hasLocationPermission()) {
+                Toast.makeText(this, "Standortzugriff erteilt. Messfahrt erneut starten.",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Ohne Standortberechtigung keine GPS-Spur.",
+                        Toast.LENGTH_LONG).show();
+            }
+            updateGpsUi();
         }
     }
 
@@ -336,9 +356,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         measurementText = text("inaktiv", 18, Typeface.BOLD, TEXT);
         pointsText = text("Punkte 0", 14, Typeface.NORMAL, MUTED);
         recordingText = text("Noch keine Messdatei", 12, Typeface.NORMAL, MUTED);
+        gpsText = text("GPS nur bei Messfahrt", 14, Typeface.NORMAL, MUTED);
         card.addView(measurementText);
         card.addView(pointsText);
         card.addView(recordingText);
+        card.addView(gpsText);
         return card;
     }
 
@@ -487,6 +509,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             preferences.edit().putInt("interval_seconds",
                     AppModel.POWER_SAVE_MIN_INTERVAL).apply();
         }
+        if (pendingMode == MeasurementMode.TRIP && !hasLocationPermission()) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
+            return;
+        }
         try {
             File file = recorder.start(this, pendingMode);
             recordingActive = true;
@@ -497,6 +524,9 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             return;
         }
         model.setMode(pendingMode);
+        if (pendingMode == MeasurementMode.TRIP) {
+            startLocationUpdates();
+        }
         applySensorInterval();
         updateUi();
     }
@@ -580,6 +610,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                 connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
             }
         }
+        stopLocationUpdates();
         try {
             recorder.stop();
         } catch (IOException exc) {
@@ -600,12 +631,102 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             return;
         }
         try {
-            recorder.write(point);
+            Location fix = freshLocation();
+            boolean trip = model.getMode() == MeasurementMode.TRIP;
+            recorder.write(point, trip && fix != null ? fix.getLatitude() : null,
+                    trip && fix != null ? fix.getLongitude() : null);
         } catch (IOException exc) {
             try {
                 recorder.stop();
             } catch (IOException ignored) {
                 // Der Schreibfehler wird bereits angezeigt.
+            }
+
+            private boolean hasLocationPermission() {
+                return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED
+                        || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED;
+            }
+
+            private void startLocationUpdates() {
+                latestLocation = null;
+                if (locationManager == null || !hasLocationPermission()) {
+                    return;
+                }
+                try {
+                    Criteria criteria = new Criteria();
+                    criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                    String bestProvider = locationManager.getBestProvider(criteria, true);
+                    if (bestProvider != null) {
+                        Location previous = locationManager.getLastKnownLocation(bestProvider);
+                        if (previous != null) {
+                            latestLocation = previous;
+                        }
+                        locationManager.requestLocationUpdates(bestProvider, 5000L, 0.0f,
+                                this, Looper.getMainLooper());
+                    }
+                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                            && !LocationManager.GPS_PROVIDER.equals(bestProvider)) {
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                                5000L, 0.0f, this, Looper.getMainLooper());
+                    }
+                    updateGpsUi();
+                } catch (SecurityException exc) {
+                    gpsText.setText("GPS-Berechtigung fehlt");
+                }
+            }
+
+            private void stopLocationUpdates() {
+                if (locationManager != null && hasLocationPermission()) {
+                    locationManager.removeUpdates(this);
+                }
+                latestLocation = null;
+                updateGpsUi();
+            }
+
+            private Location freshLocation() {
+                if (latestLocation == null
+                        || SystemClock.elapsedRealtimeNanos() - latestLocation.getElapsedRealtimeNanos()
+                        > GPS_MAX_AGE_MS * 1000000L) {
+                    return null;
+                }
+                return latestLocation;
+            }
+
+            private void updateGpsUi() {
+                if (gpsText == null) {
+                    return;
+                }
+                if (model.getMode() != MeasurementMode.TRIP) {
+                    gpsText.setText("GPS nur bei Messfahrt");
+                    return;
+                }
+                Location fix = freshLocation();
+                gpsText.setText(fix == null ? "GPS sucht Signal · keine frische Position"
+                        : String.format(Locale.GERMANY, "GPS aktuell · %.6f, %.6f",
+                        fix.getLatitude(), fix.getLongitude()));
+            }
+
+            @Override
+            public void onLocationChanged(Location location) {
+                latestLocation = location;
+                updateGpsUi();
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+                updateGpsUi();
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+                updateGpsUi();
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                updateGpsUi();
             }
             recordingActive = false;
             recordingText.setText("Aufzeichnungsfehler: " + exc.getMessage());
@@ -673,6 +794,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                     + (powerSaveActive ? " · 15 s Einschwingen, 30 s Mittelung" : ""));
             stopButton.setEnabled(mode != MeasurementMode.INACTIVE);
         }
+        updateGpsUi();
         refreshChart();
     }
 
