@@ -36,8 +36,8 @@ with a persistent notification and partial wake lock, and trip recording also
 requests location updates there. Stationary uploads send public data over
 HTTPS: configure the sensor.community `X-Sensor` ID before starting that
 mode. Bluetooth device selection, measurement mode, interval, and sensor ID
-persist between app launches. Failed uploads are reported in the UI and are
-not automatically retried.
+persist between app launches. Network errors, HTTP 429, and server errors are
+retried twice with increasing delays; other HTTP errors are reported directly.
 
 ## Build
 

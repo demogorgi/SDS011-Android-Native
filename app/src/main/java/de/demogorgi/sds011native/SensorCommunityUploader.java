@@ -18,7 +18,7 @@ final class SensorCommunityUploader {
 
     static String upload(String sensorId, HistoryPoint point) throws IOException {
         if (sensorId == null || !sensorId.matches("[A-Za-z0-9_-]{4,128}")) {
-            throw new IOException("Ungültige sensor.community Sensor-ID.");
+            throw new UploadException("Ungültige sensor.community Sensor-ID.", false);
         }
         String body = buildPayload(point);
         HttpURLConnection connection = null;
@@ -39,8 +39,9 @@ final class SensorCommunityUploader {
             int status = connection.getResponseCode();
             if (status != HttpURLConnection.HTTP_CREATED) {
                 String response = readError(connection.getErrorStream());
-                throw new IOException("HTTP " + status
-                        + (response.length() == 0 ? "" : ": " + response));
+                throw new UploadException("HTTP " + status
+                        + (response.length() == 0 ? "" : ": " + response),
+                        status == 429 || status >= 500);
             }
             return "Upload erfolgreich · PM2.5 " + String.format(Locale.GERMANY, "%.1f",
                     point.pm25) + " · PM10 " + String.format(Locale.GERMANY, "%.1f", point.pm10);
@@ -55,7 +56,7 @@ final class SensorCommunityUploader {
         if (point == null || Double.isNaN(point.pm25) || Double.isInfinite(point.pm25)
                 || Double.isNaN(point.pm10) || Double.isInfinite(point.pm10)
                 || point.pm25 < 0.0 || point.pm10 < 0.0) {
-            throw new IOException("Ungültiger Messwert.");
+            throw new UploadException("Ungültiger Messwert.", false);
         }
         return "{\"software_version\":\"SDS011-Android\","
                 + "\"sensordatavalues\":["
@@ -78,6 +79,15 @@ final class SensorCommunityUploader {
             }
         }
         return response.toString();
+    }
+
+    static final class UploadException extends IOException {
+        final boolean retryable;
+
+        UploadException(String message, boolean retryable) {
+            super(message);
+            this.retryable = retryable;
+        }
     }
 
     private SensorCommunityUploader() {

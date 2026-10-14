@@ -731,26 +731,46 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         uploadExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                try {
-                    final String result = SensorCommunityUploader.upload(sensorId, point);
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (uploadText != null) {
-                                uploadText.setText(result);
+                IOException failure = null;
+                for (int attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        final String result = SensorCommunityUploader.upload(sensorId, point);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (uploadText != null) {
+                                    uploadText.setText(result);
+                                }
+                            }
+                        });
+                        return;
+                    } catch (IOException exc) {
+                        failure = exc;
+                        if (exc instanceof SensorCommunityUploader.UploadException
+                                && !((SensorCommunityUploader.UploadException) exc).retryable) {
+                            break;
+                        }
+                        if (attempt < 2) {
+                            try {
+                                Thread.sleep(attempt == 0 ? 5000L : 15000L);
+                            } catch (InterruptedException interrupted) {
+                                Thread.currentThread().interrupt();
+                                failure = new IOException("Upload-Wiederholung abgebrochen.");
+                                break;
                             }
                         }
-                    });
-                } catch (final IOException exc) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (uploadText != null) {
-                                uploadText.setText("Upload fehlgeschlagen: " + exc.getMessage());
-                            }
-                        }
-                    });
+                    }
                 }
+                final String message = failure == null ? "unbekannter Fehler"
+                        : failure.getMessage();
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (uploadText != null) {
+                            uploadText.setText("Upload fehlgeschlagen: " + message);
+                        }
+                    }
+                });
             }
         });
     }
