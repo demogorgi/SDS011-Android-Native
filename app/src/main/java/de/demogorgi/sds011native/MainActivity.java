@@ -92,70 +92,6 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             updateUi();
             handler.postDelayed(this, 1000L);
         }
-
-        private void stopMeasurement() {
-            if (model.getMode() != MeasurementMode.INACTIVE) {
-                writePoint(model.finishCurrentMeanWindow());
-                model.setMode(MeasurementMode.INACTIVE);
-                resetPowerSave();
-                if (model.isConnected()) {
-                    connection.write(Sds011Protocol.buildSleepCommand(false));
-                    connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
-                }
-            }
-            try {
-                recorder.stop();
-            } catch (IOException exc) {
-                Toast.makeText(this, "Messdatei konnte nicht abgeschlossen werden: "
-                        + exc.getMessage(), Toast.LENGTH_LONG).show();
-            }
-            if (recordingActive) {
-                File file = recorder.getFile();
-                recordingText.setText(file == null ? "Aufzeichnung beendet"
-                        : "Gespeichert: " + file.getAbsolutePath());
-                recordingActive = false;
-            }
-            updateUi();
-        }
-
-        private void writePoint(HistoryPoint point) {
-            if (point == null || !point.recorded) {
-                return;
-            }
-            try {
-                recorder.write(point);
-            } catch (IOException exc) {
-                try {
-                    recorder.stop();
-                } catch (IOException ignored) {
-                    // Der Schreibfehler wird bereits angezeigt.
-                }
-                recordingActive = false;
-                recordingText.setText("Aufzeichnungsfehler: " + exc.getMessage());
-                Toast.makeText(this, "Messdatei kann nicht geschrieben werden.",
-                        Toast.LENGTH_LONG).show();
-            }
-        }
-
-        private int preferredInterval() {
-            int preferred = preferences.getInt("interval_seconds", 5);
-            for (int interval : AppModel.NORMAL_INTERVALS) {
-                if (interval == preferred) {
-                    return preferred;
-                }
-            }
-            return 5;
-        }
-
-        private MeasurementMode preferredMode() {
-            String value = preferences.getString("measurement_mode", MeasurementMode.LOCAL.name());
-            try {
-                MeasurementMode mode = MeasurementMode.valueOf(value);
-                return mode == MeasurementMode.INACTIVE ? MeasurementMode.LOCAL : mode;
-            } catch (IllegalArgumentException exc) {
-                return MeasurementMode.LOCAL;
-            }
-        }
     };
 
     @Override
@@ -632,6 +568,70 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         firstFrameAt = 0L;
         cycleStartedAt = 0L;
         nextWakeAt = 0L;
+    }
+
+    private void stopMeasurement() {
+        if (model.getMode() != MeasurementMode.INACTIVE) {
+            writePoint(model.finishCurrentMeanWindow());
+            model.setMode(MeasurementMode.INACTIVE);
+            resetPowerSave();
+            if (model.isConnected()) {
+                connection.write(Sds011Protocol.buildSleepCommand(false));
+                connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
+            }
+        }
+        try {
+            recorder.stop();
+        } catch (IOException exc) {
+            Toast.makeText(this, "Messdatei konnte nicht abgeschlossen werden: "
+                    + exc.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        if (recordingActive) {
+            File file = recorder.getFile();
+            recordingText.setText(file == null ? "Aufzeichnung beendet"
+                    : "Gespeichert: " + file.getAbsolutePath());
+            recordingActive = false;
+        }
+        updateUi();
+    }
+
+    private void writePoint(HistoryPoint point) {
+        if (point == null || !point.recorded) {
+            return;
+        }
+        try {
+            recorder.write(point);
+        } catch (IOException exc) {
+            try {
+                recorder.stop();
+            } catch (IOException ignored) {
+                // Der Schreibfehler wird bereits angezeigt.
+            }
+            recordingActive = false;
+            recordingText.setText("Aufzeichnungsfehler: " + exc.getMessage());
+            Toast.makeText(this, "Messdatei kann nicht geschrieben werden.",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private int preferredInterval() {
+        int preferred = preferences.getInt("interval_seconds", 5);
+        for (int interval : AppModel.NORMAL_INTERVALS) {
+            if (interval == preferred) {
+                return preferred;
+            }
+        }
+        return 5;
+    }
+
+    private MeasurementMode preferredMode() {
+        String value = preferences.getString("measurement_mode", MeasurementMode.LOCAL.name());
+        try {
+            MeasurementMode mode = MeasurementMode.valueOf(value);
+            return mode == MeasurementMode.INACTIVE ? MeasurementMode.LOCAL : mode;
+        } catch (IllegalArgumentException exc) {
+            return MeasurementMode.LOCAL;
+        }
     }
 
     private void refreshChart() {

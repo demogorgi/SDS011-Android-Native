@@ -124,8 +124,9 @@ public final class AppModel {
         if (meanSamples <= 0) {
             return null;
         }
-        return finishMeanWindow(System.currentTimeMillis(),
-                Math.max(1.0, (System.currentTimeMillis() - meanWindowStartMillis) / 1000.0));
+        long now = System.currentTimeMillis();
+        return finishMeanWindow(now,
+                Math.max(1.0, (now - meanWindowStartMillis) / 1000.0));
     }
 
     private HistoryPoint addToMeanWindow(long now, double pm25, double pm10) {
