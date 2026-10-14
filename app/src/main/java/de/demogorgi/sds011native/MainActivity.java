@@ -4,12 +4,10 @@ import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -23,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -34,6 +33,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.demogorgi.sds011native.model.AppModel;
 import de.demogorgi.sds011native.model.HistoryPoint;
@@ -43,11 +44,11 @@ import de.demogorgi.sds011native.sds.Sds011Protocol;
 import de.demogorgi.sds011native.sds.SensorConnection;
 import de.demogorgi.sds011native.ui.DustChartView;
 
-public final class MainActivity extends Activity
-        implements SensorConnection.Listener, LocationListener {
+public final class MainActivity extends Activity implements SensorConnection.Listener {
     private static final int REQ_BLUETOOTH = 1001;
     private static final int REQ_LOCATION = 1002;
     private static final long GPS_MAX_AGE_MS = 15000L;
+    private static final long SENSOR_SILENCE_TIMEOUT_MS = 15000L;
     private static final int BG = Color.rgb(244, 244, 242);
     private static final int SURFACE = Color.WHITE;
     private static final int TEXT = Color.rgb(20, 20, 18);
@@ -58,14 +59,13 @@ public final class MainActivity extends Activity
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final AppModel model = new AppModel();
     private final MeasurementRecorder recorder = new MeasurementRecorder();
+    private final ExecutorService uploadExecutor = Executors.newSingleThreadExecutor();
     private final ArrayList<BluetoothDevice> devices = new ArrayList<>();
     private final ArrayList<String> deviceLabels = new ArrayList<>();
 
     private SharedPreferences preferences;
     private BluetoothAdapter bluetoothAdapter;
     private SensorConnection connection;
-    private LocationManager locationManager;
-    private Location latestLocation;
     private ArrayAdapter<String> deviceAdapter;
     private Spinner deviceSpinner;
     private TextView connectionText;
@@ -77,6 +77,8 @@ public final class MainActivity extends Activity
     private TextView intervalText;
     private TextView recordingText;
     private TextView gpsText;
+    private TextView uploadText;
+    private EditText sensorIdInput;
     private DustChartView chartView;
     private Button connectButton;
     private Button disconnectButton;
@@ -111,8 +113,8 @@ public final class MainActivity extends Activity
         model.setIntervalSeconds(preferredInterval());
         pendingMode = preferredMode();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         connection = new SensorConnection(this);
+        connection.setSilenceTimeoutMillis(SENSOR_SILENCE_TIMEOUT_MS);
         setContentView(buildContent());
         ensureBluetoothPermission();
         updateUi();
@@ -128,6 +130,7 @@ public final class MainActivity extends Activity
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
             connection.disconnect();
         }
+        uploadExecutor.shutdown();
         super.onDestroy();
     }
 
@@ -177,8 +180,10 @@ public final class MainActivity extends Activity
         handler.post(new Runnable() {
             @Override
             public void run() {
+                writePoint(model.finishCurrentMeanWindow());
                 model.setConnected(false);
                 resetPowerSave();
+                connection.setExpectedSilenceMillis(SENSOR_SILENCE_TIMEOUT_MS);
                 setConnectionStatus(message == null ? "getrennt" : message);
                 updateUi();
             }
@@ -249,6 +254,19 @@ public final class MainActivity extends Activity
 
         connectionText = text("getrennt", 14, Typeface.NORMAL, MUTED);
         card.addView(connectionText);
+        deviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < devices.size()) {
+                    preferences.edit().putString("bluetooth_device",
+                            devices.get(position).getAddress()).apply();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
         return card;
     }
 
@@ -333,6 +351,13 @@ public final class MainActivity extends Activity
         card.addView(intervals);
         intervalText = text("", 14, Typeface.NORMAL, MUTED);
         card.addView(intervalText);
+        sensorIdInput = new EditText(this);
+        sensorIdInput.setSingleLine(true);
+        sensorIdInput.setText(preferences.getString("sensor_community_id", ""));
+        sensorIdInput.setHint("sensor.community Sensor-ID (X-Sensor)");
+        card.addView(sensorIdInput, matchWrap());
+        uploadText = text("Upload nur im Stationärmodus", 13, Typeface.NORMAL, MUTED);
+        card.addView(uploadText);
 
         LinearLayout actions = row();
         startButton = button("Start");
@@ -460,8 +485,22 @@ public final class MainActivity extends Activity
         }
         if (deviceAdapter != null) {
             deviceAdapter.notifyDataSetChanged();
+            restoreSelectedDevice();
         }
         updateUi();
+    }
+
+    private void restoreSelectedDevice() {
+        String preferredAddress = preferences.getString("bluetooth_device", null);
+        if (preferredAddress == null || deviceSpinner == null) {
+            return;
+        }
+        for (int i = 0; i < devices.size(); i++) {
+            if (preferredAddress.equals(devices.get(i).getAddress())) {
+                deviceSpinner.setSelection(i);
+                return;
+            }
+        }
     }
 
     private void connectSelectedDevice() {
@@ -475,6 +514,7 @@ public final class MainActivity extends Activity
                     Toast.LENGTH_SHORT).show();
             return;
         }
+        preferences.edit().putString("bluetooth_device", devices.get(pos).getAddress()).apply();
         setConnectionStatus("verbinde ...");
         connection.connect(bluetoothAdapter, devices.get(pos));
         updateUi();
@@ -509,6 +549,14 @@ public final class MainActivity extends Activity
             preferences.edit().putInt("interval_seconds",
                     AppModel.POWER_SAVE_MIN_INTERVAL).apply();
         }
+        String sensorId = sensorIdInput.getText().toString().trim();
+        if (pendingMode == MeasurementMode.STATIONARY
+                && !sensorId.matches("[A-Za-z0-9_-]{4,128}")) {
+            Toast.makeText(this, "Für Uploads eine gültige sensor.community Sensor-ID eintragen.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        preferences.edit().putString("sensor_community_id", sensorId).apply();
         if (pendingMode == MeasurementMode.TRIP && !hasLocationPermission()) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
@@ -524,9 +572,7 @@ public final class MainActivity extends Activity
             return;
         }
         model.setMode(pendingMode);
-        if (pendingMode == MeasurementMode.TRIP) {
-            startLocationUpdates();
-        }
+        startMeasurementForegroundService(pendingMode == MeasurementMode.TRIP);
         applySensorInterval();
         updateUi();
     }
@@ -541,7 +587,11 @@ public final class MainActivity extends Activity
         }
         boolean usable = !powerSaveActive
                 || (cycleStartedAt > 0L && now - cycleStartedAt >= AppModel.POWER_SAVE_SETTLE_MS);
-        writePoint(model.addReading(reading.pm25, reading.pm10, usable));
+        HistoryPoint point = model.addReading(reading.pm25, reading.pm10, usable);
+        writePoint(point);
+        if (point != null && model.getMode() == MeasurementMode.STATIONARY) {
+            uploadPoint(point);
+        }
         if (powerSaveActive && cycleStartedAt > 0L
                 && now - cycleStartedAt >= AppModel.POWER_SAVE_SETTLE_MS
                 + AppModel.POWER_SAVE_SAMPLE_WINDOW_MS) {
@@ -549,6 +599,7 @@ public final class MainActivity extends Activity
             nextWakeAt = cycleStartedAt + model.getIntervalSeconds() * 1000L;
             firstFrameAt = 0L;
             cycleStartedAt = 0L;
+            connection.setExpectedSilenceMillis((model.getIntervalSeconds() + 30L) * 1000L);
             connection.write(Sds011Protocol.buildSleepCommand(true));
         }
         refreshChart();
@@ -571,8 +622,10 @@ public final class MainActivity extends Activity
             }
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
             connection.write(Sds011Protocol.buildSleepCommand(false));
+            connection.setExpectedSilenceMillis(SENSOR_SILENCE_TIMEOUT_MS);
         } else {
             resetPowerSave();
+            connection.setExpectedSilenceMillis(SENSOR_SILENCE_TIMEOUT_MS);
             connection.write(Sds011Protocol.buildSleepCommand(false));
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
         }
@@ -588,6 +641,7 @@ public final class MainActivity extends Activity
             firstFrameAt = 0L;
             cycleStartedAt = 0L;
             nextWakeAt = 0L;
+            connection.setExpectedSilenceMillis(SENSOR_SILENCE_TIMEOUT_MS);
             connection.write(Sds011Protocol.buildSleepCommand(false));
         }
     }
@@ -598,6 +652,9 @@ public final class MainActivity extends Activity
         firstFrameAt = 0L;
         cycleStartedAt = 0L;
         nextWakeAt = 0L;
+        if (connection != null) {
+            connection.setExpectedSilenceMillis(SENSOR_SILENCE_TIMEOUT_MS);
+        }
     }
 
     private void stopMeasurement() {
@@ -610,7 +667,7 @@ public final class MainActivity extends Activity
                 connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
             }
         }
-        stopLocationUpdates();
+        stopMeasurementForegroundService();
         try {
             recorder.stop();
         } catch (IOException exc) {
@@ -648,6 +705,39 @@ public final class MainActivity extends Activity
         }
     }
 
+    private void uploadPoint(final HistoryPoint point) {
+        if (!point.recorded || uploadExecutor.isShutdown()) {
+            return;
+        }
+        final String sensorId = preferences.getString("sensor_community_id", "");
+        uploadText.setText("Upload läuft …");
+        uploadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final String result = SensorCommunityUploader.upload(sensorId, point);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (uploadText != null) {
+                                uploadText.setText(result);
+                            }
+                        }
+                    });
+                } catch (final IOException exc) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (uploadText != null) {
+                                uploadText.setText("Upload fehlgeschlagen: " + exc.getMessage());
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     private boolean hasLocationPermission() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
@@ -655,49 +745,36 @@ public final class MainActivity extends Activity
                 == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void startLocationUpdates() {
-        latestLocation = null;
-        if (locationManager == null || !hasLocationPermission()) {
+    private void startMeasurementForegroundService(boolean trackLocation) {
+        if (trackLocation && !hasLocationPermission()) {
             return;
         }
         try {
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            String bestProvider = locationManager.getBestProvider(criteria, true);
-            if (bestProvider != null) {
-                Location previous = locationManager.getLastKnownLocation(bestProvider);
-                if (previous != null) {
-                    latestLocation = previous;
-                }
-                locationManager.requestLocationUpdates(bestProvider, 5000L, 0.0f,
-                        this, Looper.getMainLooper());
+            Intent intent = new Intent(this, MeasurementForegroundService.class);
+            intent.putExtra(MeasurementForegroundService.EXTRA_TRACK_LOCATION, trackLocation);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
             }
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                    && !LocationManager.GPS_PROVIDER.equals(bestProvider)) {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        5000L, 0.0f, this, Looper.getMainLooper());
-            }
-            updateGpsUi();
-        } catch (SecurityException exc) {
-            gpsText.setText("GPS-Berechtigung fehlt");
+        } catch (RuntimeException exc) {
+            Toast.makeText(this, "GPS-Hintergrunddienst konnte nicht gestartet werden.",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
-    private void stopLocationUpdates() {
-        if (locationManager != null && hasLocationPermission()) {
-            locationManager.removeUpdates(this);
-        }
-        latestLocation = null;
-        updateGpsUi();
+    private void stopMeasurementForegroundService() {
+        stopService(new Intent(this, MeasurementForegroundService.class));
     }
 
     private Location freshLocation() {
-        if (latestLocation == null
-                || SystemClock.elapsedRealtimeNanos() - latestLocation.getElapsedRealtimeNanos()
+        Location location = MeasurementForegroundService.getLatestLocation();
+        if (location == null
+                || SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()
                 > GPS_MAX_AGE_MS * 1000000L) {
             return null;
         }
-        return latestLocation;
+        return location;
     }
 
     private void updateGpsUi() {
@@ -712,27 +789,6 @@ public final class MainActivity extends Activity
         gpsText.setText(fix == null ? "GPS sucht Signal · keine frische Position"
                 : String.format(Locale.GERMANY, "GPS aktuell · %.6f, %.6f",
                 fix.getLatitude(), fix.getLongitude()));
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        latestLocation = location;
-        updateGpsUi();
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        updateGpsUi();
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-        updateGpsUi();
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        updateGpsUi();
     }
 
     private int preferredInterval() {

@@ -27,6 +27,9 @@ public final class SensorConnection {
     private BluetoothSocket socket;
     private OutputStream output;
     private volatile boolean running;
+    private volatile long silenceTimeoutMillis = 15000L;
+    private volatile long lastFrameAtMillis;
+    private volatile boolean silenceTimedOut;
     private long generation;
 
     public SensorConnection(Listener listener) {
@@ -35,6 +38,14 @@ public final class SensorConnection {
 
     public synchronized boolean isRunning() {
         return running;
+    }
+
+    public void setSilenceTimeoutMillis(long timeoutMillis) {
+        silenceTimeoutMillis = Math.max(1000L, timeoutMillis);
+    }
+
+    public void setExpectedSilenceMillis(long timeoutMillis) {
+        setSilenceTimeoutMillis(timeoutMillis);
     }
 
     public synchronized void connect(final BluetoothAdapter adapter, final BluetoothDevice device) {
@@ -94,6 +105,9 @@ public final class SensorConnection {
                 }
                 localSocket.connect();
                 decoder.reset();
+                lastFrameAtMillis = android.os.SystemClock.elapsedRealtime();
+                silenceTimedOut = false;
+                startSilenceMonitor(localSocket, connectionGeneration);
                 synchronized (this) {
                     if (!isActive(connectionGeneration)) {
                         closeSocket(localSocket);
@@ -112,12 +126,17 @@ public final class SensorConnection {
                         break;
                     }
                     List<Reading> readings = decoder.feed(buf, n);
+                    if (!readings.isEmpty()) {
+                        lastFrameAtMillis = android.os.SystemClock.elapsedRealtime();
+                        retryDelaySeconds = 2L;
+                    }
                     for (Reading reading : readings) {
                         listener.onReading(reading);
                     }
                 }
             } catch (IOException exc) {
-                message = exc.getMessage() == null ? "Bluetooth-Fehler" : exc.getMessage();
+                message = silenceTimedOut ? "Keine Sensordaten innerhalb des Zeitlimits"
+                        : exc.getMessage() == null ? "Bluetooth-Fehler" : exc.getMessage();
             } catch (SecurityException exc) {
                 message = "Bluetooth-Berechtigung fehlt";
                 permissionLost = true;
@@ -153,6 +172,33 @@ public final class SensorConnection {
 
     private synchronized boolean isActive(long connectionGeneration) {
         return running && generation == connectionGeneration;
+    }
+
+    private void startSilenceMonitor(final BluetoothSocket monitoredSocket,
+                                     final long connectionGeneration) {
+        Thread monitor = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (isActive(connectionGeneration)) {
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException exc) {
+                        return;
+                    }
+                    if (monitoredSocket != socket) {
+                        return;
+                    }
+                    if (android.os.SystemClock.elapsedRealtime() - lastFrameAtMillis
+                            > silenceTimeoutMillis) {
+                        silenceTimedOut = true;
+                        closeSocket(monitoredSocket);
+                        return;
+                    }
+                }
+            }
+        }, "sds011-silence-watchdog");
+        monitor.setDaemon(true);
+        monitor.start();
     }
 
     private synchronized void closeSocket(BluetoothSocket target) {
