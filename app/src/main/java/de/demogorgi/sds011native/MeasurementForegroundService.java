@@ -112,7 +112,10 @@ public final class MeasurementForegroundService extends Service implements Locat
         }
         try {
             Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            boolean fineLocation = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED;
+            criteria.setAccuracy(fineLocation
+                    ? Criteria.ACCURACY_FINE : Criteria.ACCURACY_COARSE);
             String provider = locationManager.getBestProvider(criteria, true);
             if (provider != null) {
                 Location previous = locationManager.getLastKnownLocation(provider);
@@ -122,7 +125,7 @@ public final class MeasurementForegroundService extends Service implements Locat
                 locationManager.requestLocationUpdates(provider, 5000L, 0.0f,
                         this, Looper.getMainLooper());
             }
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            if (fineLocation && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                     && !LocationManager.GPS_PROVIDER.equals(provider)) {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                         5000L, 0.0f, this, Looper.getMainLooper());

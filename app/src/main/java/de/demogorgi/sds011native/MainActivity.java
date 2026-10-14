@@ -1,6 +1,7 @@
 package de.demogorgi.sds011native;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -356,7 +357,8 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         sensorIdInput.setText(preferences.getString("sensor_community_id", ""));
         sensorIdInput.setHint("sensor.community Sensor-ID (X-Sensor)");
         card.addView(sensorIdInput, matchWrap());
-        uploadText = text("Upload nur im Stationärmodus", 13, Typeface.NORMAL, MUTED);
+        uploadText = text("Stationärmodus sendet Werte öffentlich an sensor.community",
+                13, Typeface.NORMAL, MUTED);
         card.addView(uploadText);
 
         LinearLayout actions = row();
@@ -534,6 +536,21 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     }
 
     private void startMeasurement() {
+        if (pendingMode == MeasurementMode.STATIONARY) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Öffentlicher Upload")
+                    .setMessage("Jeder neue Messmittelwert wird an sensor.community gesendet. "
+                            + "Nur am registrierten Sensorstandort starten.")
+                    .setPositiveButton("Upload starten", (dialog, which) ->
+                            startMeasurementConfirmed())
+                    .setNegativeButton("Abbrechen", null)
+                    .show();
+            return;
+        }
+        startMeasurementConfirmed();
+    }
+
+    private void startMeasurementConfirmed() {
         if (model.getMode() != MeasurementMode.INACTIVE) {
             Toast.makeText(this, "Erst die laufende Messung beenden.",
                     Toast.LENGTH_SHORT).show();
