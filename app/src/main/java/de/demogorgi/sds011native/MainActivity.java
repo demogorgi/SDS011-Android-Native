@@ -43,6 +43,7 @@ import java.util.concurrent.Executors;
 import de.demogorgi.sds011native.model.AppModel;
 import de.demogorgi.sds011native.model.HistoryPoint;
 import de.demogorgi.sds011native.model.MeasurementMode;
+import de.demogorgi.sds011native.model.SensorSiteCoordinates;
 import de.demogorgi.sds011native.sds.Reading;
 import de.demogorgi.sds011native.sds.Sds011Protocol;
 import de.demogorgi.sds011native.sds.SensorConnection;
@@ -597,8 +598,10 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                     AppModel.POWER_SAVE_MIN_INTERVAL).apply();
         }
         String sensorId = sensorIdInput.getText().toString().trim();
-        Double sensorLatitude = parseCoordinate(sensorLatitudeInput.getText().toString());
-        Double sensorLongitude = parseCoordinate(sensorLongitudeInput.getText().toString());
+        Double sensorLatitude = SensorSiteCoordinates.parseLatitude(
+                sensorLatitudeInput.getText().toString());
+        Double sensorLongitude = SensorSiteCoordinates.parseLongitude(
+                sensorLongitudeInput.getText().toString());
         if (pendingMode == MeasurementMode.STATIONARY
                 && !sensorId.matches("[A-Za-z0-9_-]{4,128}")) {
             Toast.makeText(this, "Für Uploads eine gültige sensor.community Sensor-ID eintragen.",
@@ -611,17 +614,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                     + "(Breiten- und Längengrad) eintragen.", Toast.LENGTH_LONG).show();
             return;
         }
-        if (pendingMode == MeasurementMode.STATIONARY
-                && (Math.abs(sensorLatitude) > 90.0 || Math.abs(sensorLongitude) > 180.0)) {
-            Toast.makeText(this, "Breitengrad muss zwischen -90 und 90, "
-                    + "Längengrad zwischen -180 und 180 liegen.", Toast.LENGTH_LONG).show();
-            return;
-        }
         if (pendingMode == MeasurementMode.STATIONARY || pendingMode == MeasurementMode.TRIP) {
             if (!hasLocationPermission()) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
-            return;
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
+                return;
             }
         }
         if (pendingMode == MeasurementMode.STATIONARY) {
@@ -863,49 +860,39 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         });
     }
 
-    private Double parseCoordinate(String value) {
+    private Location stationaryLocationFix() {
+        Location location = freshLocation();
+        if (location != null || locationManager == null || !hasLocationPermission()) {
+            return location;
+        }
+        Location gps = null;
+        Location network = null;
         try {
-            double coordinate = Double.parseDouble(value.trim().replace(',', '.'));
-            return Double.isNaN(coordinate) || Double.isInfinite(coordinate)
-                    ? null : coordinate;
-        } catch (NumberFormatException exc) {
-            return null;
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
+        } catch (SecurityException ignored) {
+            gps = null;
         }
-
-        private Location stationaryLocationFix() {
-            Location location = freshLocation();
-            if (location != null || locationManager == null || !hasLocationPermission()) {
-                return location;
-            }
-            Location gps = null;
-            Location network = null;
-            try {
-                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                }
-            } catch (SecurityException ignored) {
-                gps = null;
-            }
-            try {
-                network = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            } catch (SecurityException ignored) {
-                network = null;
-            }
-            if (gps == null) {
-                location = network;
-            } else if (network == null || gps.getElapsedRealtimeNanos()
-                    >= network.getElapsedRealtimeNanos()) {
-                location = gps;
-            } else {
-                location = network;
-            }
-            if (location != null && SystemClock.elapsedRealtimeNanos()
-                    - location.getElapsedRealtimeNanos() <= GPS_MAX_AGE_MS * 1000000L) {
-                return location;
-            }
-            return null;
+        try {
+            network = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        } catch (SecurityException ignored) {
+            network = null;
         }
+        if (gps == null) {
+            location = network;
+        } else if (network == null || gps.getElapsedRealtimeNanos()
+                >= network.getElapsedRealtimeNanos()) {
+            location = gps;
+        } else {
+            location = network;
+        }
+        if (location != null && SystemClock.elapsedRealtimeNanos()
+                - location.getElapsedRealtimeNanos() <= GPS_MAX_AGE_MS * 1000000L) {
+            return location;
+        }
+        return null;
     }
 
     private void startMeasurementForegroundService(boolean trackLocation) {
