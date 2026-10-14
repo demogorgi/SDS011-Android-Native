@@ -536,6 +536,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     }
 
     private void startMeasurement() {
+        if (model.getMode() != MeasurementMode.INACTIVE) {
+            Toast.makeText(this, "Erst die laufende Messung beenden.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (!model.isConnected()) {
             Toast.makeText(this, "Erst Sensor verbinden.", Toast.LENGTH_SHORT).show();
             return;

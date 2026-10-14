@@ -34,7 +34,7 @@ final class MeasurementRecorder {
 
         String modeName = mode == MeasurementMode.TRIP ? "messfahrt"
                 : mode == MeasurementMode.STATIONARY ? "stationaer" : "lokal";
-        String fileTimestamp = new SimpleDateFormat("yyyyMMdd_HH_mm_ss", Locale.GERMANY)
+        String fileTimestamp = new SimpleDateFormat("yyyyMMdd_HH_mm_ss_SSS", Locale.GERMANY)
                 .format(new Date());
         file = new File(directory, "feinstaub_" + modeName + "_" + fileTimestamp + ".csv");
         writer = new BufferedWriter(new OutputStreamWriter(
