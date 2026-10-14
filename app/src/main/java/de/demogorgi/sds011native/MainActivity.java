@@ -641,98 +641,98 @@ public final class MainActivity extends Activity
             } catch (IOException ignored) {
                 // Der Schreibfehler wird bereits angezeigt.
             }
-
-            private boolean hasLocationPermission() {
-                return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED
-                        || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED;
-            }
-
-            private void startLocationUpdates() {
-                latestLocation = null;
-                if (locationManager == null || !hasLocationPermission()) {
-                    return;
-                }
-                try {
-                    Criteria criteria = new Criteria();
-                    criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                    String bestProvider = locationManager.getBestProvider(criteria, true);
-                    if (bestProvider != null) {
-                        Location previous = locationManager.getLastKnownLocation(bestProvider);
-                        if (previous != null) {
-                            latestLocation = previous;
-                        }
-                        locationManager.requestLocationUpdates(bestProvider, 5000L, 0.0f,
-                                this, Looper.getMainLooper());
-                    }
-                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                            && !LocationManager.GPS_PROVIDER.equals(bestProvider)) {
-                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                                5000L, 0.0f, this, Looper.getMainLooper());
-                    }
-                    updateGpsUi();
-                } catch (SecurityException exc) {
-                    gpsText.setText("GPS-Berechtigung fehlt");
-                }
-            }
-
-            private void stopLocationUpdates() {
-                if (locationManager != null && hasLocationPermission()) {
-                    locationManager.removeUpdates(this);
-                }
-                latestLocation = null;
-                updateGpsUi();
-            }
-
-            private Location freshLocation() {
-                if (latestLocation == null
-                        || SystemClock.elapsedRealtimeNanos() - latestLocation.getElapsedRealtimeNanos()
-                        > GPS_MAX_AGE_MS * 1000000L) {
-                    return null;
-                }
-                return latestLocation;
-            }
-
-            private void updateGpsUi() {
-                if (gpsText == null) {
-                    return;
-                }
-                if (model.getMode() != MeasurementMode.TRIP) {
-                    gpsText.setText("GPS nur bei Messfahrt");
-                    return;
-                }
-                Location fix = freshLocation();
-                gpsText.setText(fix == null ? "GPS sucht Signal · keine frische Position"
-                        : String.format(Locale.GERMANY, "GPS aktuell · %.6f, %.6f",
-                        fix.getLatitude(), fix.getLongitude()));
-            }
-
-            @Override
-            public void onLocationChanged(Location location) {
-                latestLocation = location;
-                updateGpsUi();
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                updateGpsUi();
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-                updateGpsUi();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-                updateGpsUi();
-            }
             recordingActive = false;
             recordingText.setText("Aufzeichnungsfehler: " + exc.getMessage());
             Toast.makeText(this, "Messdatei kann nicht geschrieben werden.",
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    private boolean hasLocationPermission() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void startLocationUpdates() {
+        latestLocation = null;
+        if (locationManager == null || !hasLocationPermission()) {
+            return;
+        }
+        try {
+            Criteria criteria = new Criteria();
+            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            String bestProvider = locationManager.getBestProvider(criteria, true);
+            if (bestProvider != null) {
+                Location previous = locationManager.getLastKnownLocation(bestProvider);
+                if (previous != null) {
+                    latestLocation = previous;
+                }
+                locationManager.requestLocationUpdates(bestProvider, 5000L, 0.0f,
+                        this, Looper.getMainLooper());
+            }
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                    && !LocationManager.GPS_PROVIDER.equals(bestProvider)) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                        5000L, 0.0f, this, Looper.getMainLooper());
+            }
+            updateGpsUi();
+        } catch (SecurityException exc) {
+            gpsText.setText("GPS-Berechtigung fehlt");
+        }
+    }
+
+    private void stopLocationUpdates() {
+        if (locationManager != null && hasLocationPermission()) {
+            locationManager.removeUpdates(this);
+        }
+        latestLocation = null;
+        updateGpsUi();
+    }
+
+    private Location freshLocation() {
+        if (latestLocation == null
+                || SystemClock.elapsedRealtimeNanos() - latestLocation.getElapsedRealtimeNanos()
+                > GPS_MAX_AGE_MS * 1000000L) {
+            return null;
+        }
+        return latestLocation;
+    }
+
+    private void updateGpsUi() {
+        if (gpsText == null) {
+            return;
+        }
+        if (model.getMode() != MeasurementMode.TRIP) {
+            gpsText.setText("GPS nur bei Messfahrt");
+            return;
+        }
+        Location fix = freshLocation();
+        gpsText.setText(fix == null ? "GPS sucht Signal · keine frische Position"
+                : String.format(Locale.GERMANY, "GPS aktuell · %.6f, %.6f",
+                fix.getLatitude(), fix.getLongitude()));
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        latestLocation = location;
+        updateGpsUi();
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        updateGpsUi();
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        updateGpsUi();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        updateGpsUi();
     }
 
     private int preferredInterval() {

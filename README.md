@@ -15,17 +15,21 @@ Android app:
 - saved measurement interval and selected measurement mode
 - CSV recording for trip, local, and stationary sessions; the final partial
   interval is written when a session stops
+- GPS coordinates in trip CSV files and separate PM2.5/PM10 KML tracks with
+  measured concentration as altitude; stale fixes break the track
 
 Still to port from the Python app:
 
-- KML file writing and GPS/trip track handling
 - sensor.community upload
 - persistent device selection and fuller error/backoff handling
 
-CSV files use semicolon separators and German decimal commas. They are saved
-in the app-specific `Documents/Feinstaub` directory, and the current file path
-is shown in the measurement card. Coordinates are empty until GPS recording is
-implemented. Settings and CSV files require no storage permission.
+CSV files use semicolon separators and German decimal commas. CSV and KML
+files are saved in the app-specific `Documents/Feinstaub` directory, and the
+CSV path is shown in the measurement card. Trip recording requests location
+permission at runtime; fixes older than 15 seconds are omitted. Settings and
+recordings require no storage permission. Android may limit location delivery
+while the app is in the background; a foreground tracking service is still to
+be added for reliable screen-off recording.
 
 ## Build
 

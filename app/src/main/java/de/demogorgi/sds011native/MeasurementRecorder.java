@@ -32,12 +32,15 @@ final class MeasurementRecorder {
     private boolean trip;
 
     File start(Context context, MeasurementMode mode) throws IOException {
-        stop();
         File documents = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         if (documents == null) {
             documents = new File(context.getFilesDir(), Environment.DIRECTORY_DOCUMENTS);
         }
-        File directory = new File(documents, "Feinstaub");
+        return start(new File(documents, "Feinstaub"), mode);
+    }
+
+    File start(File directory, MeasurementMode mode) throws IOException {
+        stop();
         if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Ausgabeordner kann nicht angelegt werden.");
         }
