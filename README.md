@@ -7,6 +7,7 @@ Android app:
 
 - native Android Activity, no WebView and no AndroidX requirement
 - Bluetooth Classic SPP connection to a paired SDS011/HC-05/HC-06 device
+- automatic Bluetooth reconnect with exponential delays capped at 60 seconds
 - SDS011 frame decoder and sleep/work-period commands
 - current PM2.5/PM10 display
 - raw-value and mean-value in-memory plot with "Plot leeren"
@@ -21,7 +22,7 @@ Android app:
 Still to port from the Python app:
 
 - sensor.community upload
-- persistent device selection and fuller error/backoff handling
+- persistent device selection and sensor-silence detection
 
 CSV files use semicolon separators and German decimal commas. CSV and KML
 files are saved in the app-specific `Documents/Feinstaub` directory, and the

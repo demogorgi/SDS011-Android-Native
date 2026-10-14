@@ -9,6 +9,10 @@ public final class FrameDecoder {
 
     private final ArrayList<Byte> buffer = new ArrayList<>();
 
+    public void reset() {
+        buffer.clear();
+    }
+
     public List<Reading> feed(byte[] chunk, int length) {
         if (chunk != null && length > 0) {
             for (int i = 0; i < length; i++) {

@@ -27,6 +27,7 @@ public final class SensorConnection {
     private BluetoothSocket socket;
     private OutputStream output;
     private volatile boolean running;
+    private long generation;
 
     public SensorConnection(Listener listener) {
         this.listener = listener;
@@ -38,11 +39,12 @@ public final class SensorConnection {
 
     public synchronized void connect(final BluetoothAdapter adapter, final BluetoothDevice device) {
         disconnect();
+        final long connectionGeneration = ++generation;
         running = true;
         worker = new Thread(new Runnable() {
             @Override
             public void run() {
-                runConnection(adapter, device);
+                runConnection(adapter, device, connectionGeneration);
             }
         }, "sds011-bluetooth");
         worker.start();
@@ -50,7 +52,13 @@ public final class SensorConnection {
 
     public synchronized void disconnect() {
         running = false;
-        closeSocket();
+        generation += 1;
+        closeSocket(socket);
+        Thread currentWorker = worker;
+        worker = null;
+        if (currentWorker != null) {
+            currentWorker.interrupt();
+        }
     }
 
     public synchronized void write(byte[] bytes) {
@@ -61,61 +69,104 @@ public final class SensorConnection {
             output.write(bytes);
             output.flush();
         } catch (IOException ignored) {
-            closeSocket();
+            closeSocket(socket);
         }
     }
 
-    private void runConnection(BluetoothAdapter adapter, BluetoothDevice device) {
-        String message = "getrennt";
-        try {
-            if (adapter != null) {
-                adapter.cancelDiscovery();
-            }
-            BluetoothSocket localSocket = device.createRfcommSocketToServiceRecord(SPP_UUID);
-            synchronized (this) {
-                socket = localSocket;
-            }
-            localSocket.connect();
-            synchronized (this) {
-                output = localSocket.getOutputStream();
-            }
-            listener.onConnected();
+    private void runConnection(BluetoothAdapter adapter, BluetoothDevice device,
+                               long connectionGeneration) {
+        long retryDelaySeconds = 2L;
+        while (isActive(connectionGeneration)) {
+            BluetoothSocket localSocket = null;
+            String message = "Bluetooth-Fehler";
+            boolean permissionLost = false;
+            try {
+                if (adapter != null) {
+                    adapter.cancelDiscovery();
+                }
+                localSocket = device.createRfcommSocketToServiceRecord(SPP_UUID);
+                synchronized (this) {
+                    if (!isActive(connectionGeneration)) {
+                        closeSocket(localSocket);
+                        return;
+                    }
+                    socket = localSocket;
+                }
+                localSocket.connect();
+                decoder.reset();
+                synchronized (this) {
+                    if (!isActive(connectionGeneration)) {
+                        closeSocket(localSocket);
+                        return;
+                    }
+                    output = localSocket.getOutputStream();
+                }
+                listener.onConnected();
 
-            InputStream input = localSocket.getInputStream();
-            byte[] buf = new byte[Sds011Protocol.READ_SIZE];
-            while (running) {
-                int n = input.read(buf);
-                if (n < 0) {
-                    message = "Sensor getrennt";
-                    break;
+                InputStream input = localSocket.getInputStream();
+                byte[] buf = new byte[Sds011Protocol.READ_SIZE];
+                while (isActive(connectionGeneration)) {
+                    int n = input.read(buf);
+                    if (n < 0) {
+                        message = "Sensor getrennt";
+                        break;
+                    }
+                    List<Reading> readings = decoder.feed(buf, n);
+                    for (Reading reading : readings) {
+                        listener.onReading(reading);
+                    }
                 }
-                List<Reading> readings = decoder.feed(buf, n);
-                for (Reading reading : readings) {
-                    listener.onReading(reading);
+            } catch (IOException exc) {
+                message = exc.getMessage() == null ? "Bluetooth-Fehler" : exc.getMessage();
+            } catch (SecurityException exc) {
+                message = "Bluetooth-Berechtigung fehlt";
+                permissionLost = true;
+            } finally {
+                closeSocket(localSocket);
+            }
+
+            if (!isActive(connectionGeneration)) {
+                return;
+            }
+            if (permissionLost) {
+                synchronized (this) {
+                    if (generation == connectionGeneration) {
+                        running = false;
+                        worker = null;
+                    }
+                }
+                listener.onDisconnected(message);
+                return;
+            }
+            listener.onDisconnected(message + "; neuer Versuch in "
+                    + retryDelaySeconds + " s");
+            try {
+                Thread.sleep(retryDelaySeconds * 1000L);
+            } catch (InterruptedException exc) {
+                if (!isActive(connectionGeneration)) {
+                    return;
                 }
             }
-        } catch (IOException exc) {
-            message = exc.getMessage() == null ? "Bluetooth-Fehler" : exc.getMessage();
-        } finally {
-            synchronized (this) {
-                running = false;
-                output = null;
-            }
-            closeSocket();
-            listener.onDisconnected(message);
+            retryDelaySeconds = Math.min(retryDelaySeconds * 2L, 60L);
         }
     }
 
-    private synchronized void closeSocket() {
-        if (socket == null) {
+    private synchronized boolean isActive(long connectionGeneration) {
+        return running && generation == connectionGeneration;
+    }
+
+    private synchronized void closeSocket(BluetoothSocket target) {
+        if (target == null) {
             return;
         }
         try {
-            socket.close();
+            target.close();
         } catch (IOException ignored) {
             // Verbindung wird gerade beendet.
         }
-        socket = null;
-        output = null;
+        if (socket == target) {
+            socket = null;
+            output = null;
+        }
     }
 }
