@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -24,11 +25,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Set;
 
 import de.demogorgi.sds011native.model.AppModel;
+import de.demogorgi.sds011native.model.HistoryPoint;
 import de.demogorgi.sds011native.model.MeasurementMode;
 import de.demogorgi.sds011native.sds.Reading;
 import de.demogorgi.sds011native.sds.Sds011Protocol;
@@ -46,9 +50,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final AppModel model = new AppModel();
+    private final MeasurementRecorder recorder = new MeasurementRecorder();
     private final ArrayList<BluetoothDevice> devices = new ArrayList<>();
     private final ArrayList<String> deviceLabels = new ArrayList<>();
 
+    private SharedPreferences preferences;
     private BluetoothAdapter bluetoothAdapter;
     private SensorConnection connection;
     private ArrayAdapter<String> deviceAdapter;
@@ -60,6 +66,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private TextView measurementText;
     private TextView pointsText;
     private TextView intervalText;
+    private TextView recordingText;
     private DustChartView chartView;
     private Button connectButton;
     private Button disconnectButton;
@@ -76,6 +83,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     private long firstFrameAt;
     private long cycleStartedAt;
     private long nextWakeAt;
+    private boolean recordingActive;
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -84,11 +92,78 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             updateUi();
             handler.postDelayed(this, 1000L);
         }
+
+        private void stopMeasurement() {
+            if (model.getMode() != MeasurementMode.INACTIVE) {
+                writePoint(model.finishCurrentMeanWindow());
+                model.setMode(MeasurementMode.INACTIVE);
+                resetPowerSave();
+                if (model.isConnected()) {
+                    connection.write(Sds011Protocol.buildSleepCommand(false));
+                    connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
+                }
+            }
+            try {
+                recorder.stop();
+            } catch (IOException exc) {
+                Toast.makeText(this, "Messdatei konnte nicht abgeschlossen werden: "
+                        + exc.getMessage(), Toast.LENGTH_LONG).show();
+            }
+            if (recordingActive) {
+                File file = recorder.getFile();
+                recordingText.setText(file == null ? "Aufzeichnung beendet"
+                        : "Gespeichert: " + file.getAbsolutePath());
+                recordingActive = false;
+            }
+            updateUi();
+        }
+
+        private void writePoint(HistoryPoint point) {
+            if (point == null || !point.recorded) {
+                return;
+            }
+            try {
+                recorder.write(point);
+            } catch (IOException exc) {
+                try {
+                    recorder.stop();
+                } catch (IOException ignored) {
+                    // Der Schreibfehler wird bereits angezeigt.
+                }
+                recordingActive = false;
+                recordingText.setText("Aufzeichnungsfehler: " + exc.getMessage());
+                Toast.makeText(this, "Messdatei kann nicht geschrieben werden.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+
+        private int preferredInterval() {
+            int preferred = preferences.getInt("interval_seconds", 5);
+            for (int interval : AppModel.NORMAL_INTERVALS) {
+                if (interval == preferred) {
+                    return preferred;
+                }
+            }
+            return 5;
+        }
+
+        private MeasurementMode preferredMode() {
+            String value = preferences.getString("measurement_mode", MeasurementMode.LOCAL.name());
+            try {
+                MeasurementMode mode = MeasurementMode.valueOf(value);
+                return mode == MeasurementMode.INACTIVE ? MeasurementMode.LOCAL : mode;
+            } catch (IllegalArgumentException exc) {
+                return MeasurementMode.LOCAL;
+            }
+        }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        preferences = getPreferences(MODE_PRIVATE);
+        model.setIntervalSeconds(preferredInterval());
+        pendingMode = preferredMode();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         connection = new SensorConnection(this);
         setContentView(buildContent());
@@ -101,6 +176,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     protected void onDestroy() {
         handler.removeCallbacks(tick);
         if (connection != null) {
+            stopMeasurement();
             connection.write(Sds011Protocol.buildSleepCommand(false));
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
             connection.disconnect();
@@ -315,8 +391,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                model.setMode(MeasurementMode.INACTIVE);
-                updateUi();
+                stopMeasurement();
             }
         });
         actions.addView(stopButton, weightWrap());
@@ -324,8 +399,10 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
 
         measurementText = text("inaktiv", 18, Typeface.BOLD, TEXT);
         pointsText = text("Punkte 0", 14, Typeface.NORMAL, MUTED);
+        recordingText = text("Noch keine Messdatei", 12, Typeface.NORMAL, MUTED);
         card.addView(measurementText);
         card.addView(pointsText);
+        card.addView(recordingText);
         return card;
     }
 
@@ -347,6 +424,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
             @Override
             public void onClick(View v) {
                 pendingMode = mode;
+                preferences.edit().putString("measurement_mode", mode.name()).apply();
                 updateUi();
             }
         });
@@ -364,7 +442,11 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
                             "Stationaer nur 5 oder 15 min.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                if (model.getMode() != MeasurementMode.INACTIVE) {
+                    writePoint(model.finishCurrentMeanWindow());
+                }
                 model.setIntervalSeconds(seconds);
+                preferences.edit().putInt("interval_seconds", seconds).apply();
                 applySensorInterval();
                 updateUi();
             }
@@ -441,6 +523,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
     }
 
     private void disconnectSensor() {
+        stopMeasurement();
         if (connection != null) {
             connection.write(Sds011Protocol.buildSleepCommand(false));
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0));
@@ -460,6 +543,17 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         if (pendingMode == MeasurementMode.STATIONARY
                 && model.getIntervalSeconds() < AppModel.POWER_SAVE_MIN_INTERVAL) {
             model.setIntervalSeconds(AppModel.POWER_SAVE_MIN_INTERVAL);
+            preferences.edit().putInt("interval_seconds",
+                    AppModel.POWER_SAVE_MIN_INTERVAL).apply();
+        }
+        try {
+            File file = recorder.start(this, pendingMode);
+            recordingActive = true;
+            recordingText.setText("Aufzeichnung: " + file.getAbsolutePath());
+        } catch (IOException exc) {
+            Toast.makeText(this, "Messdatei kann nicht angelegt werden: "
+                    + exc.getMessage(), Toast.LENGTH_LONG).show();
+            return;
         }
         model.setMode(pendingMode);
         applySensorInterval();
@@ -476,7 +570,7 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         }
         boolean usable = !powerSaveActive
                 || (cycleStartedAt > 0L && now - cycleStartedAt >= AppModel.POWER_SAVE_SETTLE_MS);
-        model.addReading(reading.pm25, reading.pm10, usable);
+        writePoint(model.addReading(reading.pm25, reading.pm10, usable));
         if (powerSaveActive && cycleStartedAt > 0L
                 && now - cycleStartedAt >= AppModel.POWER_SAVE_SETTLE_MS
                 + AppModel.POWER_SAVE_SAMPLE_WINDOW_MS) {

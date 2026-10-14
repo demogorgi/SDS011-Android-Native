@@ -75,7 +75,7 @@ public final class AppModel {
         return Math.max(0L, (nowMillis - sessionStartMillis) / 1000L);
     }
 
-    public synchronized void addReading(double pm25, double pm10, boolean usable) {
+    public synchronized HistoryPoint addReading(double pm25, double pm10, boolean usable) {
         long now = System.currentTimeMillis();
         currentPm25 = pm25;
         currentPm10 = pm10;
@@ -83,8 +83,9 @@ public final class AppModel {
         addLimited(rawHistory, new HistoryPoint(now, pm25, pm10, 1.0, false, usable),
                 RAW_HISTORY_LIMIT);
         if (usable) {
-            addToMeanWindow(now, pm25, pm10);
+            return addToMeanWindow(now, pm25, pm10);
         }
+        return null;
     }
 
     public synchronized double getCurrentPm25() {
@@ -119,7 +120,15 @@ public final class AppModel {
         rawHistory.clear();
     }
 
-    private void addToMeanWindow(long now, double pm25, double pm10) {
+    public synchronized HistoryPoint finishCurrentMeanWindow() {
+        if (meanSamples <= 0) {
+            return null;
+        }
+        return finishMeanWindow(System.currentTimeMillis(),
+                Math.max(1.0, (System.currentTimeMillis() - meanWindowStartMillis) / 1000.0));
+    }
+
+    private HistoryPoint addToMeanWindow(long now, double pm25, double pm10) {
         if (meanWindowStartMillis == 0L) {
             meanWindowStartMillis = now;
         }
@@ -135,24 +144,27 @@ public final class AppModel {
                 intervalSeconds < POWER_SAVE_MIN_INTERVAL
                         && now - meanWindowStartMillis >= intervalMillis;
         if (powerSaveWindowComplete || normalWindowComplete) {
-            finishMeanWindow(now, powerSaveWindowComplete
+            return finishMeanWindow(now, powerSaveWindowComplete
                     ? POWER_SAVE_SAMPLE_WINDOW_MS / 1000.0
                     : Math.max(1.0, (now - meanWindowStartMillis) / 1000.0));
         }
+        return null;
     }
 
-    private void finishMeanWindow(long now, double interval) {
+    private HistoryPoint finishMeanWindow(long now, double interval) {
         if (meanSamples <= 0) {
             resetMeanWindow();
-            return;
+            return null;
         }
         boolean recorded = mode != MeasurementMode.INACTIVE;
-        addLimited(meanHistory, new HistoryPoint(now, meanSum25 / meanSamples,
-                meanSum10 / meanSamples, interval, recorded, true), HISTORY_LIMIT);
+        HistoryPoint point = new HistoryPoint(now, meanSum25 / meanSamples,
+                meanSum10 / meanSamples, interval, recorded, true);
+        addLimited(meanHistory, point, HISTORY_LIMIT);
         if (recorded) {
             sessionPoints += 1;
         }
         resetMeanWindow();
+        return point;
     }
 
     private void resetMeanWindow() {
