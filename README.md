@@ -5,7 +5,7 @@ Native Android port of the SDS011 particulate matter sensor app.
 This repository ports the QPython app to a dependency-light native Java
 Android app:
 
-- native Android Activity, no WebView and no AndroidX requirement
+- native Android Activity, no WebView; AndroidX Core provides secure file sharing
 - Bluetooth Classic SPP connection to a paired SDS011/HC-05/HC-06 device
 - automatic Bluetooth reconnect with exponential delays capped at 60 seconds
 - sensor silence detection with reconnect (planned SDS011 sleep periods are
@@ -28,7 +28,20 @@ Android app:
 
 CSV files use semicolon separators and German decimal commas. CSV and KML
 files are saved in the app-specific `Documents/Feinstaub` directory, and the
-CSV path is shown in the measurement card. Trip recording requests location
+CSV path is shown in the measurement card. After stopping a measurement, tap
+**Messdateien öffnen / teilen** and select a CSV or KML file, including recordings
+from earlier app versions. **Öffnen mit …** launches a compatible installed app
+(for example Google Earth for KML); **Teilen …** opens Android's share sheet for
+apps such as Gmail or WhatsApp. **Speichern unter …** copies the file to a
+location chosen in Android's document picker, such as Downloads. These exported
+copies remain accessible independently of the app and survive its removal.
+Opening and sharing use a read-only content URI with a temporary access grant,
+provided by AndroidX Core's FileProvider, scoped to the recording directories.
+The original recordings stay in app storage; uninstalling the app removes them.
+Stop the current measurement before opening the file list so KML documents
+are finalized. No broad storage permission or PC connection is needed.
+
+Trip recording requests location
 permission at runtime; fixes older than 15 seconds are omitted. Settings and
 recordings require no storage permission. Android may limit location delivery
 while the app is in the background; measurements run in a foreground service

@@ -419,6 +419,16 @@ public final class MainActivity extends Activity implements SensorConnection.Lis
         card.addView(pointsText);
         card.addView(recordingText);
         card.addView(gpsText);
+        Button filesButton = button("Messdateien öffnen / teilen");
+        filesButton.setOnClickListener(v -> {
+            if (recordingActive) {
+                Toast.makeText(this, "Bitte zuerst die Messung stoppen, damit alle Dateien vollständig sind.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            startActivity(new Intent(this, RecordingsActivity.class));
+        });
+        card.addView(filesButton, matchWrap());
         return card;
     }
 
