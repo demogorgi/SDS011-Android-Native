@@ -146,7 +146,10 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         _uiState.update { it.copy(placeName = name.take(40)) }
     }
 
+    private var appContext: Context? = null
+
     fun loadSettings(context: Context) {
+        appContext = context.applicationContext
         if (settingsStore != null) return
         val store = SettingsStore(context)
         settingsStore = store
@@ -267,9 +270,18 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
 
     override fun onDisconnected(message: String?) {
         viewModelScope.launch {
+            val activeMode = appModel.mode
+            val wasRecording = activeMode != MeasurementMode.INACTIVE
             appModel.isConnected = false
             resetPowerSave()
             val failed = message != null && message != "getrennt"
+
+            if (wasRecording && failed) {
+                appContext?.let { ctx ->
+                    de.demogorgi.sds011native.util.NotificationHelper.showConnectionLostAlert(ctx, activeMode.label)
+                }
+            }
+
             _uiState.update {
                 it.copy(
                     connectionStatus = if (failed) "Verbindung verloren" else "getrennt",
