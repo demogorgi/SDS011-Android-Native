@@ -13,9 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import de.demogorgi.sds011native.model.MeasurementMode
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -30,6 +27,7 @@ import de.demogorgi.sds011native.ui.components.TopBar
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
+    onRequestPermissions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -86,8 +84,14 @@ fun MainScreen(
                 isConnected = uiState.isConnected,
                 connectionStatus = uiState.connectionStatus,
                 onDeviceSelected = { viewModel.selectDevice(it) },
-                onReloadDevices = { viewModel.loadDevices(context) },
-                onConnect = { viewModel.connectSelectedDevice(context) },
+                onReloadDevices = {
+                    onRequestPermissions()
+                    viewModel.loadDevices(context)
+                },
+                onConnect = {
+                    onRequestPermissions()
+                    viewModel.connectSelectedDevice(context)
+                },
                 onDisconnect = { viewModel.disconnectSensor() }
             )
 
