@@ -212,9 +212,14 @@ class Recorder(
             val code = conn.responseCode
             conn.disconnect()
             if (code == 201) UploadInfo(System.currentTimeMillis(), true, "PM2.5 $t25 · PM10 $t10 übertragen")
-            else UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen (Status $code)")
+            else UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen (Server-Antwort $code)")
         } catch (e: Exception) {
-            UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen: ${e.message}")
+            val errReason = when {
+                e is java.net.UnknownHostException -> "Keine Internetverbindung"
+                e is java.net.SocketTimeoutException -> "Zeitüberschreitung beim Server-Upload"
+                else -> "Server nicht erreichbar"
+            }
+            UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen ($errReason)")
         }
         onUpload(info)
     }

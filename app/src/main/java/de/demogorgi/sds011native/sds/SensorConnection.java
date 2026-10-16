@@ -139,8 +139,7 @@ public final class SensorConnection {
                     }
                 }
             } catch (IOException exc) {
-                message = silenceTimedOut ? "Keine Sensordaten innerhalb des Zeitlimits"
-                        : exc.getMessage() == null ? "Bluetooth-Fehler" : exc.getMessage();
+                message = formatIOException(exc, silenceTimedOut);
             } catch (SecurityException exc) {
                 message = "Bluetooth-Berechtigung fehlt";
                 permissionLost = true;
@@ -218,5 +217,25 @@ public final class SensorConnection {
             socket = null;
             output = null;
         }
+    }
+
+    private static String formatIOException(IOException exc, boolean silenceTimedOut) {
+        if (silenceTimedOut) {
+            return "Keine Sensordaten empfangen";
+        }
+        if (exc == null || exc.getMessage() == null) {
+            return "Sensor-Verbindung abgebrochen";
+        }
+        String raw = exc.getMessage().toLowerCase();
+        if (raw.contains("read failed") || raw.contains("socket might closed") || raw.contains("read ret -1") || raw.contains("socket closed")) {
+            return "Sensor-Verbindung unterbrochen";
+        }
+        if (raw.contains("connection refused") || raw.contains("connection reset") || raw.contains("broken pipe")) {
+            return "Sensor antwortet nicht";
+        }
+        if (raw.contains("timeout") || raw.contains("timed out")) {
+            return "Zeitüberschreitung bei der Verbindung";
+        }
+        return "Sensor-Verbindung unterbrochen";
     }
 }
