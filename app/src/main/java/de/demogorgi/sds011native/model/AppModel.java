@@ -29,6 +29,25 @@ public final class AppModel {
     private double meanSum10;
     private long sessionStartMillis;
     private int sessionPoints;
+    private double sessionSum25;
+    private double sessionSum10;
+    private MeanListener meanListener;
+
+    public interface MeanListener {
+        void onRecordedMean(HistoryPoint point);
+    }
+
+    public synchronized void setMeanListener(MeanListener listener) {
+        meanListener = listener;
+    }
+
+    public synchronized double getSessionAvg25() {
+        return sessionPoints == 0 ? 0.0 : sessionSum25 / sessionPoints;
+    }
+
+    public synchronized double getSessionAvg10() {
+        return sessionPoints == 0 ? 0.0 : sessionSum10 / sessionPoints;
+    }
 
     public synchronized void setConnected(boolean connected) {
         this.connected = connected;
@@ -57,6 +76,8 @@ public final class AppModel {
         }
         sessionStartMillis = mode == MeasurementMode.INACTIVE ? 0L : System.currentTimeMillis();
         sessionPoints = 0;
+        sessionSum25 = 0.0;
+        sessionSum10 = 0.0;
         resetMeanWindow();
     }
 
@@ -163,6 +184,11 @@ public final class AppModel {
         addLimited(meanHistory, point, HISTORY_LIMIT);
         if (recorded) {
             sessionPoints += 1;
+            sessionSum25 += point.pm25;
+            sessionSum10 += point.pm10;
+            if (meanListener != null) {
+                meanListener.onRecordedMean(point);
+            }
         }
         resetMeanWindow();
         return point;
