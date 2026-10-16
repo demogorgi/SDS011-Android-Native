@@ -93,7 +93,11 @@ public final class SensorConnection {
             boolean permissionLost = false;
             try {
                 if (adapter != null) {
-                    adapter.cancelDiscovery();
+                    try {
+                        adapter.cancelDiscovery();
+                    } catch (Throwable ignored) {
+                        // cancelDiscovery kann auf Android 12+ ohne BLUETOOTH_SCAN eine SecurityException werfen.
+                    }
                 }
                 localSocket = device.createRfcommSocketToServiceRecord(SPP_UUID);
                 synchronized (this) {
