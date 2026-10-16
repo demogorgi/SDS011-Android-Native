@@ -152,7 +152,7 @@ fun ChartCard(
 
             DustChartCanvas(
                 points = historyPoints,
-                dots = !rawChart,
+                dots = rawChart,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp)
@@ -300,13 +300,13 @@ fun DustChartCanvas(
                 if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             if (dots) {
-                // Rohwerte: nur sehr kleine Punkte (1/3 der normalen Größe), keine Verbindungslinie
+                // Rohwerte: Nur Punkte (keine Verbindungslinie), leicht vergößerter Punkt (2dp Radius)
                 points.forEach { p ->
-                    drawCircle(color, radius = 1.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
+                    drawCircle(color, radius = 2.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
                 }
             } else {
-                // Mittelwerte: linespoints (Linie + Punkte)
-                drawPath(path, color, style = Stroke(1.5.dp.toPx()))
+                // Mittelwerte: Linespoints (Linie + Punkte)
+                drawPath(path, color, style = Stroke(2.dp.toPx()))
                 points.forEach { p ->
                     drawCircle(color, radius = 3.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
                 }
