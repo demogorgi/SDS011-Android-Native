@@ -300,16 +300,20 @@ fun DustChartCanvas(
                 if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             if (dots) {
-                drawPath(path, color.copy(alpha = 0.35f), style = Stroke(1.dp.toPx()))
+                // Rohwerte: nur Punkte, keine Verbindungslinie
                 points.forEach { p ->
-                    drawCircle(color, radius = 2.5.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
+                    drawCircle(color, radius = 3.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
                 }
             } else {
+                // Mittelwerte: linespoints (Linie + Punkte)
                 drawPath(path, color, style = Stroke(1.5.dp.toPx()))
+                points.forEach { p ->
+                    drawCircle(color, radius = 3.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
+                }
             }
             val last = points.last()
             val c = Offset(xOf(last.epochMillis), yOf(selector(last)))
-            drawCircle(color, radius = 4.dp.toPx(), center = c)
+            drawCircle(color, radius = 5.dp.toPx(), center = c)
             val text = measurer.measure(String.format(Locale.GERMANY, "%.1f", selector(last)), endStyle)
             drawText(text, topLeft = Offset(c.x + 8.dp.toPx(), c.y - text.size.height / 2f))
         }
