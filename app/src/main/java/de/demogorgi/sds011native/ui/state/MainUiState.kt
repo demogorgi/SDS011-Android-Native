@@ -6,6 +6,24 @@ import de.demogorgi.sds011native.model.MeasurementMode
 import de.demogorgi.sds011native.rec.UploadInfo
 import de.demogorgi.sds011native.settings.AppSettings
 
+data class SensorDevice(
+    val name: String,
+    val address: String,
+    val isSimulated: Boolean = false,
+    val bluetoothDevice: BluetoothDevice? = null
+) {
+    val displayLabel: String
+        get() = name
+
+    companion object {
+        val SIMULATED = SensorDevice(
+            name = "DSDTECH HC-06 (simuliert)",
+            address = "00:00:00:00:00:00",
+            isSimulated = true
+        )
+    }
+}
+
 enum class AqiLevel(val label: String) {
     NONE("kein Wert"),
     GOOD("gut"),
@@ -48,8 +66,8 @@ enum class GpsStatus { NONE, SEARCHING, FIX }
 data class MainUiState(
     val connectionStatus: String = "getrennt",
     val isConnected: Boolean = false,
-    val selectedDevice: BluetoothDevice? = null,
-    val availableDevices: List<BluetoothDevice> = emptyList(),
+    val selectedDevice: SensorDevice? = SensorDevice.SIMULATED,
+    val availableDevices: List<SensorDevice> = listOf(SensorDevice.SIMULATED),
 
     val currentPm25: Double? = null,
     val currentPm10: Double? = null,

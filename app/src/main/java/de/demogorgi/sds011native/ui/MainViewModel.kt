@@ -21,6 +21,7 @@ import de.demogorgi.sds011native.ui.state.LastSession
 import de.demogorgi.sds011native.ui.state.MainUiState
 import de.demogorgi.sds011native.ui.state.GpsStatus
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,46 +66,89 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         }
     }
 
+    private var simulationJob: kotlinx.coroutines.Job? = null
+
     fun loadDevices(context: Context) {
         val adapter = BluetoothAdapter.getDefaultAdapter()
-        if (adapter == null) {
-            _uiState.update { it.copy(availableDevices = emptyList(), errorMessage = "Bluetooth nicht verfügbar") }
-            return
+        val bondedDevices = if (adapter != null &&
+            (Build.VERSION.SDK_INT < 31 || context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED)
+        ) {
+            try {
+                adapter.bondedDevices?.map {
+                    de.demogorgi.sds011native.ui.state.SensorDevice(
+                        name = it.name ?: "Unbenanntes Gerät",
+                        address = it.address,
+                        isSimulated = false,
+                        bluetoothDevice = it
+                    )
+                } ?: emptyList()
+            } catch (e: SecurityException) {
+                emptyList()
+            }
+        } else {
+            emptyList()
         }
 
-        if (Build.VERSION.SDK_INT >= 31 &&
-            context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            _uiState.update { it.copy(availableDevices = emptyList(), errorMessage = "Bluetooth-Berechtigung fehlt") }
-            return
-        }
-
-        val bonded = adapter.bondedDevices?.toList() ?: emptyList()
+        val allDevices = bondedDevices + de.demogorgi.sds011native.ui.state.SensorDevice.SIMULATED
         _uiState.update { state ->
             state.copy(
-                availableDevices = bonded,
-                selectedDevice = state.selectedDevice ?: bonded.firstOrNull(),
-                errorMessage = if (bonded.isEmpty()) "Kein gekoppeltes Gerät gefunden" else null
+                availableDevices = allDevices,
+                selectedDevice = state.selectedDevice ?: allDevices.first(),
+                errorMessage = null
             )
         }
     }
 
-    fun selectDevice(device: BluetoothDevice) {
+    fun selectDevice(device: de.demogorgi.sds011native.ui.state.SensorDevice) {
         _uiState.update { it.copy(selectedDevice = device) }
     }
 
     fun connectSelectedDevice(context: Context) {
         val device = _uiState.value.selectedDevice
         if (device == null) {
-            _uiState.update { it.copy(errorMessage = "Bitte zuerst ein gekoppeltes Gerät auswählen") }
+            _uiState.update { it.copy(errorMessage = "Bitte zuerst ein Gerät auswählen") }
+            return
+        }
+
+        if (device.isSimulated) {
+            connection.disconnect()
+            simulationJob?.cancel()
+            appModel.isConnected = true
+            _uiState.update { it.copy(connectionStatus = "verbunden (Simulation)", isConnected = true, errorMessage = null) }
+            applySensorInterval()
+
+            simulationJob = viewModelScope.launch {
+                var base25 = 12.4
+                var base10 = 24.8
+                while (isActive) {
+                    if (!powerSaveActive || !sensorSleeping) {
+                        base25 = (base25 + (Math.random() - 0.49) * 0.8).coerceIn(2.0, 85.0)
+                        base10 = (base10 + (Math.random() - 0.49) * 1.4).coerceIn(5.0, 140.0)
+                        handleReading(Reading(base25, base10, 0x5349))
+                    }
+                    delay(1000L)
+                }
+            }
+            updateUiState()
             return
         }
 
         val adapter = BluetoothAdapter.getDefaultAdapter() ?: return
+        val btDev = device.bluetoothDevice
+        if (btDev == null) {
+            _uiState.update { it.copy(errorMessage = "Bluetooth-Gerät nicht verfügbar") }
+            return
+        }
+
+        simulationJob?.cancel()
+        simulationJob = null
         _uiState.update { it.copy(connectionStatus = "verbinde ...", errorMessage = null) }
-        connection.connect(adapter, device)
+        connection.connect(adapter, btDev)
     }
 
     fun disconnectSensor() {
+        simulationJob?.cancel()
+        simulationJob = null
         connection.write(Sds011Protocol.buildSleepCommand(false))
         connection.write(Sds011Protocol.buildWorkPeriodCommand(0))
         connection.disconnect()
@@ -220,8 +264,12 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
             MeasurementMode.LOCAL -> _uiState.value.placeName
             else -> ""
         }
+        val isSimulated = _uiState.value.selectedDevice?.isSimulated == true
+        if (targetMode == MeasurementMode.STATIONARY && isSimulated) {
+            _uiState.update { it.copy(errorMessage = "Simulation: Öffentlicher Upload zu sensor.community deaktiviert") }
+        }
         rec.sensorId = settings.sensorId
-        rec.uploadEnabled = settings.uploadEnabled
+        rec.uploadEnabled = settings.uploadEnabled && !isSimulated
         rec.start(targetMode, name)
         _uiState.update { it.copy(uploadInfo = null) }
         appModel.mode = targetMode
