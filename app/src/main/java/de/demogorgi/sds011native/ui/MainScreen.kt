@@ -60,17 +60,13 @@ fun MainScreen(
     }
 
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
-    val recording = uiState.mode != MeasurementMode.INACTIVE
 
     Scaffold(
         topBar = {
             TopBar(
                 statusText = uiState.connectionStatus,
                 isConnected = uiState.isConnected,
-                recordingSeconds = if (recording) uiState.sessionElapsedSeconds else null,
-                onSettingsClick = { viewModel.showSettings(true) },
-                onRecordingClick = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } }
+                onSettingsClick = { viewModel.showSettings(true) }
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },

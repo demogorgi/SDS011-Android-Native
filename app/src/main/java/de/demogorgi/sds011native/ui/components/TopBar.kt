@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,24 +24,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.demogorgi.sds011native.R
 import de.demogorgi.sds011native.ui.theme.AqiGood
-import de.demogorgi.sds011native.ui.theme.AqiHigh
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
     statusText: String,
     isConnected: Boolean,
-    recordingSeconds: Long?,
-    onRecordingClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -68,6 +67,7 @@ fun TopBar(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "Feinstaub",
+                    maxLines = 1,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
@@ -77,11 +77,8 @@ fun TopBar(
             }
         },
         actions = {
-            if (recordingSeconds != null) {
-                RecordingPill(recordingSeconds, onRecordingClick)
-            }
             StatusPill(statusText = statusText, isConnected = isConnected)
-            androidx.compose.material3.IconButton(onClick = onSettingsClick) {
+            IconButton(onClick = onSettingsClick) {
                 GearIcon(MaterialTheme.colorScheme.onSurface)
             }
         },
@@ -131,35 +128,12 @@ fun StatusPill(
     }
 }
 
-@Composable
-fun RecordingPill(seconds: Long, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        shape = CircleShape,
-        color = AqiHigh.copy(alpha = 0.14f),
-        onClick = onClick,
-        modifier = modifier.padding(end = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            LiveIndicatorDot(isActive = true, color = AqiHigh)
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = formatElapsed(seconds),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
 fun formatElapsed(seconds: Long): String =
     String.format(java.util.Locale.GERMANY, "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
 
 @Composable
 private fun GearIcon(color: Color) {
-    androidx.compose.foundation.Canvas(Modifier.size(24.dp).graphicsLayer(compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen)) {
+    androidx.compose.foundation.Canvas(Modifier.size(24.dp).graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)) {
         val c = center
         val outer = size.minDimension / 2f
         val body = outer * 0.78f
@@ -174,6 +148,6 @@ private fun GearIcon(color: Color) {
             }
         }
         drawCircle(color, radius = body, center = c)
-        drawCircle(Color.Transparent, radius = outer * 0.32f, center = c, blendMode = androidx.compose.ui.graphics.BlendMode.Clear)
+        drawCircle(Color.Transparent, radius = outer * 0.32f, center = c, blendMode = BlendMode.Clear)
     }
 }

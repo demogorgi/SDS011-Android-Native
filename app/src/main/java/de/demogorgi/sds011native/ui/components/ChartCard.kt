@@ -300,9 +300,9 @@ fun DustChartCanvas(
                 if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             if (dots) {
-                // Rohwerte: nur Punkte, keine Verbindungslinie
+                // Rohwerte: nur sehr kleine Punkte (1/3 der normalen Größe), keine Verbindungslinie
                 points.forEach { p ->
-                    drawCircle(color, radius = 3.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
+                    drawCircle(color, radius = 1.dp.toPx(), center = Offset(xOf(p.epochMillis), yOf(selector(p))))
                 }
             } else {
                 // Mittelwerte: linespoints (Linie + Punkte)
