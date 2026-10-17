@@ -2,6 +2,10 @@
 
 Native Android port of the SDS011 particulate matter sensor app.
 
+> [!NOTE]
+> 📜 **Original version:** This app is based on the earlier
+> [SDS011 Android (QPython)](https://github.com/demogorgi/SDS011-Android) project.
+
 This repository ports the QPython app to a dependency-light native Java
 Android app:
 
