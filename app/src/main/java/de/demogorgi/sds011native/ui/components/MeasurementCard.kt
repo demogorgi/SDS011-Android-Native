@@ -108,7 +108,7 @@ fun MeasurementCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Messauftrag",
+                    text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.card_measurement_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -133,16 +133,16 @@ fun MeasurementCard(
                     Spacer(Modifier.height(12.dp))
                 }
                 ModeCard(
-                    title = "Beobachten",
-                    description = "Nur anzeigen und zeichnen, nichts wird gespeichert",
+                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_observe_title),
+                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_observe_desc),
                     icon = Icons.Default.Info,
                     selected = pendingMode == MeasurementMode.INACTIVE,
                     onClick = { onPendingModeChange(MeasurementMode.INACTIVE) }
                 ) {}
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = "Messfahrt",
-                    description = "Unterwegs: GPS-Spur (KML) und CSV",
+                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_trip_title),
+                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_trip_desc),
                     icon = Icons.Default.Send,
                     selected = pendingMode == MeasurementMode.TRIP,
                     onClick = { onPendingModeChange(MeasurementMode.TRIP) }
@@ -152,8 +152,8 @@ fun MeasurementCard(
                 }
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = "Lokal",
-                    description = "An einem Ort: CSV mit Ortsname",
+                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_local_title),
+                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_local_desc),
                     icon = Icons.Default.Place,
                     selected = pendingMode == MeasurementMode.LOCAL,
                     onClick = { onPendingModeChange(MeasurementMode.LOCAL) }
@@ -163,9 +163,9 @@ fun MeasurementCard(
                 }
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = "Stationär",
-                    badge = "öffentlich",
-                    description = "Upload zu sensor.community mit jedem neuen Mittelwert, dazu CSV",
+                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_stationary_title),
+                    badge = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.badge_public),
+                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_stationary_desc),
                     icon = Icons.Default.Home,
                     selected = pendingMode == MeasurementMode.STATIONARY,
                     onClick = { onPendingModeChange(MeasurementMode.STATIONARY) }
@@ -193,7 +193,7 @@ fun MeasurementCard(
 
             Spacer(Modifier.height(20.dp))
             Text(
-                text = "Mittelwert-Takt",
+                text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.interval_title),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -224,7 +224,7 @@ fun MeasurementCard(
                 ) {
                     Box(Modifier.size(16.dp).clip(RoundedCornerShape(3.dp)).background(Color.White))
                     Spacer(Modifier.width(10.dp))
-                    Text("Stoppen", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.stop_measurement), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             } else if (shownMode == MeasurementMode.INACTIVE) {
                 Text(
@@ -244,7 +244,7 @@ fun MeasurementCard(
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "${shownMode.label} starten",
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.start_measurement, androidx.compose.ui.res.stringResource(shownMode.labelRes)),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )

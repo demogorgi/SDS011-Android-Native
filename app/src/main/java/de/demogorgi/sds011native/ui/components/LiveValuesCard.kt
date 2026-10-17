@@ -122,11 +122,11 @@ fun LiveValuesCard(
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = when {
-                        !isConnected -> "kein Sensor"
-                        sensorPauseSeconds != null -> "Sensor pausiert · nächste Messung in ${formatElapsed(sensorPauseSeconds)}"
-                        readingAgeSeconds < 0 -> "warte auf ersten Messwert …"
-                        readingAgeSeconds <= 2 -> "live · gerade eben"
-                        else -> "letzter Wert vor $readingAgeSeconds s"
+                        !isConnected -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.no_sensor)
+                        sensorPauseSeconds != null -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.sensor_paused, formatElapsed(sensorPauseSeconds))
+                        readingAgeSeconds < 0 -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.waiting_first_reading)
+                        readingAgeSeconds <= 2 -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.reading_age_live)
+                        else -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.reading_age_seconds, readingAgeSeconds)
                     },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -174,7 +174,7 @@ fun LiveValuesCard(
                     .clickable { showLevels = !showLevels }
             ) {
                 Text(
-                    text = "Was bedeuten die Stufen?",
+                    text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.levels_explanation),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -314,7 +314,7 @@ fun AqiLevelBadge(
             Box(Modifier.size(8.dp).clip(CircleShape).background(badgeFg))
             Spacer(Modifier.width(6.dp))
             Text(
-                text = level.label,
+                text = androidx.compose.ui.res.stringResource(level.labelRes),
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = badgeFg
             )

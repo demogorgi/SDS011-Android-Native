@@ -92,7 +92,8 @@ fun SensorCard(
                             maxLines = 1
                         )
                         Text(
-                            text = if (isConnected) "verbunden" else "verbinde …",
+                            text = if (isConnected) androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.status_connected)
+                            else androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.status_connecting),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -102,7 +103,7 @@ fun SensorCard(
                             onClick = onDisconnect,
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Trennen")
+                            Text(androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.action_disconnect))
                         }
                     }
                 }
@@ -118,7 +119,7 @@ fun SensorCard(
                             value = selectedDevice?.name ?: "SDS011 simuliert",
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Bluetooth-Gerät") },
+                            label = { Text(androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.label_select_device)) },
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.ArrowDropDown,
@@ -179,7 +180,7 @@ fun SensorCard(
                         .height(52.dp)
                 ) {
                     Text(
-                        text = "Verbinden",
+                        text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.action_connect),
                         fontWeight = FontWeight.Bold
                     )
                 }

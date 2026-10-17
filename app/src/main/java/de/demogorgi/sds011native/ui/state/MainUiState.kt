@@ -24,11 +24,11 @@ data class SensorDevice(
     }
 }
 
-enum class AqiLevel(val label: String) {
-    NONE("kein Wert"),
-    GOOD("gut"),
-    ELEVATED("erhöht"),
-    HIGH("hoch");
+enum class AqiLevel(val labelRes: Int) {
+    NONE(de.demogorgi.sds011native.R.string.aqi_none),
+    GOOD(de.demogorgi.sds011native.R.string.aqi_good),
+    ELEVATED(de.demogorgi.sds011native.R.string.aqi_elevated),
+    HIGH(de.demogorgi.sds011native.R.string.aqi_high);
 
     companion object {
         fun fromPm25(value: Double?): AqiLevel {

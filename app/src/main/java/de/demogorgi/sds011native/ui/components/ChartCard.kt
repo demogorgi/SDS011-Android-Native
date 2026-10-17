@@ -106,27 +106,35 @@ fun ChartCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Verlauf",
+                    text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.card_chart_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = onClearPlot) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Plot leeren",
+                        contentDescription = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.clear_plot),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             SegmentedChoice(
-                options = listOf(false to "Mittelwerte", true to "Rohwerte"),
+                options = listOf(
+                    false to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.series_means),
+                    true to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.series_raw)
+                ),
                 selected = rawChart,
                 onSelected = onRawChartChange
             )
             Spacer(Modifier.height(8.dp))
             SegmentedChoice(
-                options = listOf(600L to "10 min", 3600L to "1 h", 21600L to "6 h", 0L to "Alles"),
+                options = listOf(
+                    600L to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.range_10m),
+                    3600L to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.range_1h),
+                    21600L to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.range_6h),
+                    0L to androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.range_all)
+                ),
                 selected = chartRangeSeconds,
                 onSelected = onRangeChange
             )
