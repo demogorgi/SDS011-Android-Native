@@ -207,7 +207,7 @@ fun DustChartCanvas(
     val elevatedLabel = stringResource(R.string.aqi_elevated)
     val highLabel = stringResource(R.string.aqi_high)
 
-    if (points.size < 2) {
+    if (points.isEmpty()) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
