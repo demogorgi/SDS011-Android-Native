@@ -114,7 +114,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
             connection.disconnect()
             simulationJob?.cancel()
             appModel.isConnected = true
-            _uiState.update { it.copy(connectionStatus = "verbunden (Simulation)", isConnected = true, errorMessage = null) }
+            _uiState.update { it.copy(connectionStatus = "verbunden (simuliert)", isConnected = true, errorMessage = null) }
             applySensorInterval()
 
             simulationJob = viewModelScope.launch {

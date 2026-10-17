@@ -17,7 +17,7 @@ data class SensorDevice(
 
     companion object {
         val SIMULATED = SensorDevice(
-            name = "DSDTECH HC-06 (simuliert)",
+            name = "SDS011 simuliert",
             address = "00:00:00:00:00:00",
             isSimulated = true
         )

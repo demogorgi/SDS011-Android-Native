@@ -9,7 +9,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -35,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,9 +51,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import de.demogorgi.sds011native.ui.state.SensorDevice
-import de.demogorgi.sds011native.ui.theme.AqiElevated
 import de.demogorgi.sds011native.ui.theme.AqiGood
 import de.demogorgi.sds011native.ui.theme.BrandTeal
 
@@ -90,29 +85,12 @@ fun SensorCard(
                     BluetoothBadge(connected = isConnected, connecting = connecting)
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = selectedDevice?.name ?: "SDS011 Sensor",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            if (selectedDevice?.isSimulated == true) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Surface(
-                                    shape = CircleShape,
-                                    color = AqiElevated.copy(alpha = 0.2f)
-                                ) {
-                                    Text(
-                                        text = "Simulation",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            text = selectedDevice?.name ?: "SDS011 Sensor",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
                         Text(
                             text = if (isConnected) "verbunden" else "verbinde …",
                             style = MaterialTheme.typography.bodyMedium,
@@ -137,7 +115,7 @@ fun SensorCard(
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
-                            value = selectedDevice?.name ?: "DSDTECH HC-06 (simuliert)",
+                            value = selectedDevice?.name ?: "SDS011 simuliert",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Bluetooth-Gerät") },
@@ -166,31 +144,10 @@ fun SensorCard(
                             availableDevices.forEach { device ->
                                 DropdownMenuItem(
                                     text = {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = device.name,
-                                                fontWeight = FontWeight.Medium,
-                                                modifier = Modifier.weight(1f, fill = false)
-                                            )
-                                            if (device.isSimulated) {
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Surface(
-                                                    shape = CircleShape,
-                                                    color = AqiElevated.copy(alpha = 0.2f)
-                                                ) {
-                                                    Text(
-                                                        text = "Simulieren",
-                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                        color = MaterialTheme.colorScheme.onSurface,
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
+                                        Text(
+                                            text = device.name,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     },
                                     onClick = {
                                         onDeviceSelected(device)
@@ -222,7 +179,7 @@ fun SensorCard(
                         .height(52.dp)
                 ) {
                     Text(
-                        text = if (selectedDevice?.isSimulated == true) "Simulation starten" else "Verbinden",
+                        text = "Verbinden",
                         fontWeight = FontWeight.Bold
                     )
                 }
