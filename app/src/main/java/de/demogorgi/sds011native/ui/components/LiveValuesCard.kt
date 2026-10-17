@@ -49,6 +49,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.demogorgi.sds011native.ui.state.AqiLevel
@@ -71,9 +73,11 @@ fun LiveValuesCard(
     gpsStatus: GpsStatus,
     gpsLat: Double,
     gpsLon: Double,
+    mapUrl: String?,
     modifier: Modifier = Modifier
 ) {
     var showLevels by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
     val tint by animateColorAsState(
         targetValue = worstLevelColor(pm25Level, pm10Level),
         label = "cardTint"
@@ -163,6 +167,14 @@ fun LiveValuesCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            if (mapUrl != null) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.sensor_community_map_link),
+                    style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.Underline),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 28.dp, top = 4.dp).clickable { uriHandler.openUri(mapUrl) }
+                )
             }
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))

@@ -24,6 +24,7 @@ import de.demogorgi.sds011native.ui.components.LiveValuesCard
 import de.demogorgi.sds011native.ui.components.MeasurementCard
 import de.demogorgi.sds011native.ui.components.SensorCard
 import de.demogorgi.sds011native.ui.components.TopBar
+import de.demogorgi.sds011native.model.MeasurementMode
 import de.demogorgi.sds011native.util.LocalizedContent
 
 @Composable
@@ -67,6 +68,15 @@ fun MainScreen(
         }
 
         val scrollState = rememberScrollState()
+        val selectedMode = if (uiState.mode != MeasurementMode.INACTIVE) uiState.mode else uiState.pendingMode
+        val mapCoordinates = when (selectedMode) {
+            MeasurementMode.STATIONARY -> uiState.settings.sensorLat to uiState.settings.sensorLon
+            MeasurementMode.TRIP -> if (uiState.gpsStatus == GpsStatus.FIX) uiState.gpsLat to uiState.gpsLon else null
+            else -> null
+        }
+        val mapUrl = mapCoordinates
+            ?.takeIf { (lat, lon) -> lat.isFinite() && lon.isFinite() && lat in -90.0..90.0 && lon in -180.0..180.0 }
+            ?.let { (lat, lon) -> String.format(java.util.Locale.US, "https://deutschland.maps.sensor.community/#16/%.5f/%.5f", lat, lon) }
 
         Scaffold(
             topBar = {
@@ -115,7 +125,8 @@ fun MainScreen(
                     isConnected = uiState.isConnected,
                     gpsStatus = uiState.gpsStatus,
                     gpsLat = uiState.gpsLat,
-                    gpsLon = uiState.gpsLon
+                    gpsLon = uiState.gpsLon,
+                    mapUrl = mapUrl
                 )
 
                 ChartCard(

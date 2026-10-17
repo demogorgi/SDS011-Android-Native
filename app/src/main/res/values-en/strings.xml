@@ -192,4 +192,5 @@
     <string name="upload_failed">Upload failed (%s)</string>
     <string name="app_version">Version %s</string>
     <string name="app_logo_description">App logo</string>
+    <string name="sensor_community_map_link">View on sensor.community</string>
 </resources>
