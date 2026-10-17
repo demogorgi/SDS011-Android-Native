@@ -42,6 +42,7 @@ public final class MeasurementForegroundService extends Service implements Locat
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             int type = trackLocation
                     ? android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                        | android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
                     : android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
             startForeground(1, notification, type);
         } else {

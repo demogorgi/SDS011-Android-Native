@@ -30,6 +30,9 @@ public final class SensorConnection {
     private volatile long silenceTimeoutMillis = 15000L;
     private volatile long lastFrameAtMillis;
     private volatile boolean silenceTimedOut;
+    // The ViewModel explicitly sleeps the SDS011 between power-save samples.
+    // Silence is expected until it sends the matching wake command.
+    private volatile boolean sensorSleeping;
     private long generation;
 
     public SensorConnection(Listener listener) {
@@ -79,8 +82,25 @@ public final class SensorConnection {
         try {
             output.write(bytes);
             output.flush();
+            updateSleepState(bytes);
         } catch (IOException ignored) {
             closeSocket(socket);
+        }
+    }
+
+    private void updateSleepState(byte[] bytes) {
+        // SDS011 command frame: AA B4 06 01 <value> ... AB; value 0=sleep, 1=work.
+        if (bytes.length < 19 || (bytes[0] & 0xFF) != 0xAA
+                || (bytes[1] & 0xFF) != 0xB4 || (bytes[2] & 0xFF) != 0x06
+                || (bytes[3] & 0xFF) != 0x01 || (bytes[18] & 0xFF) != 0xAB) {
+            return;
+        }
+        boolean goingToSleep = (bytes[4] & 0xFF) == 0;
+        sensorSleeping = goingToSleep;
+        if (!goingToSleep) {
+            // Allow the fan and sensor to restart after an intentional sleep.
+            lastFrameAtMillis = android.os.SystemClock.elapsedRealtime();
+            silenceTimedOut = false;
         }
     }
 
@@ -192,7 +212,7 @@ public final class SensorConnection {
                         return;
                     }
                     if (android.os.SystemClock.elapsedRealtime() - lastFrameAtMillis
-                            > silenceTimeoutMillis) {
+                            > silenceTimeoutMillis && !sensorSleeping) {
                         silenceTimedOut = true;
                         closeSocket(monitoredSocket);
                         return;

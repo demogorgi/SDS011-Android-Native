@@ -47,10 +47,18 @@ are finalized. No broad storage permission or PC connection is needed.
 
 Trip recording requests location
 permission at runtime; fixes older than 15 seconds are omitted. Settings and
-recordings require no storage permission. Android may limit location delivery
-while the app is in the background; measurements run in a foreground service
-with a persistent notification and partial wake lock, and trip recording also
-requests location updates there. Stationary uploads send public data over
+recordings require no storage permission. Each active measurement runs in a
+foreground service with a persistent notification and partial wake lock, which
+keeps Bluetooth measurement running with the screen off. Trip recording also
+requests location updates from that service. For the most reliable long
+sessions, allow background activity and set the app's battery usage to
+**Unrestricted** (or disable battery optimization for the app, depending on the
+Android version and device manufacturer). Allow notifications so the ongoing
+measurement and connection-loss alerts are visible. Menu names vary by device;
+these settings are usually under **Settings → Apps → SDS011 Native → Battery**
+and **Notifications**. Do not force-stop the app during a session. Trip
+recording needs location permission; allow location in the background if your
+Android version offers that option. Stationary uploads send public data over
 HTTPS: configure the sensor.community `X-Sensor` ID before starting that
 mode. Enter the registered sensor latitude/longitude in the measurement
 settings; coordinate edits are saved locally immediately. sensor.community

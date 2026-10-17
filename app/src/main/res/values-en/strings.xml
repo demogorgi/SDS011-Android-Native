@@ -170,7 +170,7 @@
     <string name="notification_channel_desc">Alerts when the connection is lost during measurement</string>
     <string name="notification_measurement_interrupted">Measurement interrupted!</string>
     <string name="notification_connection_lost">Bluetooth connection to the sensor was lost (%s).</string>
-    <string name="foreground_channel">Trip recording</string>
+    <string name="foreground_channel">SDS011 measurement</string>
     <string name="foreground_description">Bluetooth measurement and GPS tracking remain active in the background</string>
     <string name="foreground_trip_running">SDS011 trip recording active</string>
     <string name="foreground_measurement_running">SDS011 measurement active</string>

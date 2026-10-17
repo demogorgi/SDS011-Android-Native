@@ -4,6 +4,7 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.SystemClock
@@ -11,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.demogorgi.sds011native.model.AppModel
 import de.demogorgi.sds011native.model.MeasurementMode
+import de.demogorgi.sds011native.MeasurementForegroundService
 import de.demogorgi.sds011native.sds.Reading
 import de.demogorgi.sds011native.sds.Sds011Protocol
 import de.demogorgi.sds011native.sds.SensorConnection
@@ -53,9 +55,28 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
     init {
         appModel.setMeanListener { point ->
             val s = _uiState.value
+            val serviceFix = if (appModel.mode == MeasurementMode.TRIP)
+                MeasurementForegroundService.getLatestLocation() else null
+            val serviceFixAgeMs = serviceFix?.let {
+                (SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos) / 1_000_000L
+            }
+            val freshServiceFix = serviceFix != null && serviceFixAgeMs != null &&
+                serviceFixAgeMs in 0L..Recorder.GPS_MAX_AGE_MS
             val fresh = s.gpsStatus == GpsStatus.FIX &&
                 SystemClock.elapsedRealtime() - lastFixAt <= Recorder.GPS_MAX_AGE_MS
-            recorder?.record(point, if (fresh) s.gpsLat else null, if (fresh) s.gpsLon else null)
+            recorder?.record(
+                point,
+                when {
+                    freshServiceFix -> serviceFix!!.latitude
+                    fresh -> s.gpsLat
+                    else -> null
+                },
+                when {
+                    freshServiceFix -> serviceFix!!.longitude
+                    fresh -> s.gpsLon
+                    else -> null
+                }
+            )
         }
         viewModelScope.launch {
             while (true) {
@@ -155,6 +176,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         connection.disconnect()
         appModel.isConnected = false
         resetPowerSave()
+        stopMeasurementService(appContext)
         _uiState.update { it.copy(connectionStatus = "getrennt", isConnected = false) }
         updateUiState()
     }
@@ -281,6 +303,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         rec.start(targetMode, name)
         _uiState.update { it.copy(uploadInfo = null) }
         appModel.mode = targetMode
+        startMeasurementService(context, targetMode == MeasurementMode.TRIP)
         applySensorInterval()
         updateUiState()
     }
@@ -302,7 +325,26 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         }
         recorder?.stop()
         appModel.mode = MeasurementMode.INACTIVE
+        stopMeasurementService(appContext)
         updateUiState()
+    }
+
+    private fun startMeasurementService(context: Context, trackLocation: Boolean) {
+        appContext = context.applicationContext
+        val hasLocationPermission = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val intent = Intent(context, MeasurementForegroundService::class.java).apply {
+            putExtra(MeasurementForegroundService.EXTRA_TRACK_LOCATION, trackLocation && hasLocationPermission)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    private fun stopMeasurementService(context: Context?) {
+        context?.stopService(Intent(context, MeasurementForegroundService::class.java))
     }
 
     fun clearErrorMessage() {

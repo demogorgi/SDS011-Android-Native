@@ -170,7 +170,7 @@
     <string name="notification_channel_desc">Mitteilungen bei Verbindungsabbruch während der Messung</string>
     <string name="notification_measurement_interrupted">Messung unterbrochen!</string>
     <string name="notification_connection_lost">Bluetooth-Verbindung zum Sensor wurde getrennt (%s).</string>
-    <string name="foreground_channel">Messfahrt</string>
+    <string name="foreground_channel">SDS011-Messung</string>
     <string name="foreground_description">Bluetooth-Messung und GPS-Aufzeichnung bleiben im Hintergrund aktiv</string>
     <string name="foreground_trip_running">SDS011-Messfahrt läuft</string>
     <string name="foreground_measurement_running">SDS011-Messung läuft</string>
