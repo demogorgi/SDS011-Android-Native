@@ -31,6 +31,7 @@ replay_pid*
 .idea/
 build/
 app/build/
+app/release/
 local.properties
 captures/
 *.iml

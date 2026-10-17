@@ -8,6 +8,19 @@ dependencies {
     implementation 'androidx.core:core:1.15.0'
 }
 
+// Release credentials live in the user's ~/.gradle/gradle.properties, never in Git.
+def releaseStoreFile = providers.gradleProperty('sds011ReleaseStoreFile').orNull
+def releaseStorePassword = providers.gradleProperty('sds011ReleaseStorePassword').orNull
+def releaseKeyAlias = providers.gradleProperty('sds011ReleaseKeyAlias').orNull
+def releaseKeyPassword = providers.gradleProperty('sds011ReleaseKeyPassword').orNull
+def releaseSigningConfigured = [releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword]
+    .every { it != null && !it.trim().isEmpty() }
+def releaseTaskRequested = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+
+if (releaseTaskRequested && !releaseSigningConfigured) {
+    throw new GradleException('Release signing is not configured. Add sds011Release* values to ~/.gradle/gradle.properties.')
+}
+
 android {
     namespace 'de.demogorgi.sds011native'
     compileSdk 35
@@ -22,6 +35,25 @@ android {
 
     buildFeatures {
         compose true
+    }
+
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            release {
+                storeFile rootProject.file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
+        }
     }
 
     compileOptions {
