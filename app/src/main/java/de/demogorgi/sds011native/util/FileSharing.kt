@@ -1,7 +1,9 @@
 package de.demogorgi.sds011native.util
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
+import android.app.Activity
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import de.demogorgi.sds011native.R
@@ -35,7 +37,7 @@ object FileSharing {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_file_chooser, file.name)))
+            launchChooser(context, intent, context.getString(R.string.share_file_chooser, file.name))
         } catch (e: Exception) {
             Toast.makeText(context, context.getString(R.string.share_error, e.message.orEmpty()), Toast.LENGTH_LONG).show()
         }
@@ -68,9 +70,21 @@ object FileSharing {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_files_count, validFiles.size)))
+            launchChooser(context, intent, context.getString(R.string.share_files_count, validFiles.size))
         } catch (e: Exception) {
             Toast.makeText(context, context.getString(R.string.share_error, e.message.orEmpty()), Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun launchChooser(context: Context, intent: Intent, title: String) {
+        val chooser = Intent.createChooser(intent, title)
+        if (!context.hasActivity()) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooser)
+    }
+
+    private fun Context.hasActivity(): Boolean = when (this) {
+        is Activity -> true
+        is ContextWrapper -> baseContext.hasActivity()
+        else -> false
     }
 }
