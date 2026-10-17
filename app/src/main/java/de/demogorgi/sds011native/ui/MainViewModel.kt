@@ -47,10 +47,10 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         _uiState.update { it.copy(gpsStatus = status, gpsLat = lat, gpsLon = lon) }
     }
 
-    private var powerSaveActive = false
-    private var sensorSleeping = false
-    private var cycleStartedAt = 0L
-    private var nextWakeAt = 0L
+    @Volatile private var powerSaveActive = false
+    @Volatile private var sensorSleeping = false
+    @Volatile private var cycleStartedAt = 0L
+    @Volatile private var nextWakeAt = 0L
 
     init {
         appModel.setMeanListener { point ->
@@ -304,7 +304,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         _uiState.update { it.copy(uploadInfo = null) }
         appModel.mode = targetMode
         startMeasurementService(context, targetMode == MeasurementMode.TRIP)
-        applySensorInterval()
+        applySensorInterval(startNewPowerSaveCycle = targetMode == MeasurementMode.STATIONARY)
         updateUiState()
     }
 
@@ -412,6 +412,10 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
     }
 
     private fun handleReading(reading: Reading) {
+        // Ignore buffered or unexpected frames while the sensor is meant to sleep.
+        // In particular, do not let them start a new warm-up cycle or refresh raw values.
+        if (powerSaveActive && sensorSleeping) return
+
         val now = SystemClock.elapsedRealtime()
         if (powerSaveActive && cycleStartedAt == 0L) {
             cycleStartedAt = now
@@ -428,17 +432,17 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         updateUiState()
     }
 
-    private fun applySensorInterval() {
+    private fun applySensorInterval(startNewPowerSaveCycle: Boolean = false) {
         if (!appModel.isConnected) {
             resetPowerSave()
             return
         }
         val interval = appModel.intervalSeconds
         if (interval >= AppModel.POWER_SAVE_MIN_INTERVAL) {
-            if (!powerSaveActive) {
+            if (!powerSaveActive || startNewPowerSaveCycle) {
                 powerSaveActive = true
                 sensorSleeping = false
-                cycleStartedAt = 0L
+                cycleStartedAt = if (startNewPowerSaveCycle) SystemClock.elapsedRealtime() else 0L
                 nextWakeAt = 0L
             }
             connection.write(Sds011Protocol.buildWorkPeriodCommand(0))
@@ -455,7 +459,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         val now = SystemClock.elapsedRealtime()
         if (nextWakeAt > 0L && now >= nextWakeAt) {
             sensorSleeping = false
-            cycleStartedAt = 0L
+            cycleStartedAt = now
             nextWakeAt = 0L
             connection.write(Sds011Protocol.buildSleepCommand(false))
         }
