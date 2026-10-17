@@ -62,6 +62,15 @@ coordinates persist between app launches. Network errors, HTTP 429, and server
 errors are retried twice with increasing delays; other HTTP errors are
 reported directly.
 
+## Screenshots
+
+The app interface is available in German and English. These screenshots show
+the simulated sensor and live readings:
+
+| German | English |
+| --- | --- |
+| ![German app interface](screenshots/app-de.png) | ![English app interface](screenshots/app-en.png) |
+
 ## Build
 
 The project is a standard Gradle Android project.
@@ -73,14 +82,8 @@ Local requirements:
 - Android SDK platform 35
 
 Open this folder in Android Studio and let it sync the project, or build from
-the command line with a Gradle installation:
+the command line with the included Gradle wrapper:
 
-```powershell
-gradle assembleDebug
-```
-
-If a Gradle wrapper is added later, run:
-
-```powershell
-.\gradlew.bat assembleDebug
+```shell
+./gradlew assembleDebug
 ```

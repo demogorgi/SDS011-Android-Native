@@ -79,7 +79,7 @@ fun SettingsScreen(
                 title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
@@ -137,18 +137,18 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Stationärer Upload", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    Text(stringResource(R.string.settings_stationary_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                     Text(
-                        "Gilt für den Auftrag „Stationär“ und wird auf diesem Gerät gespeichert.",
+                        stringResource(R.string.settings_stationary_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("Upload zu sensor.community", fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.settings_upload_label), fontWeight = FontWeight.Medium)
                             Text(
-                                if (upload) "Mittelwerte werden gesendet." else "Nur CSV, nichts wird gesendet.",
+                                if (upload) stringResource(R.string.settings_upload_enabled_desc) else stringResource(R.string.settings_upload_disabled_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -159,18 +159,18 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = sensorId,
                         onValueChange = { sensorId = it.trim().take(60) },
-                        label = { Text("Sensor-ID") },
+                        label = { Text(stringResource(R.string.settings_sensor_id)) },
                         isError = !idOk,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Text("Sensorstandort", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.settings_sensor_location), fontWeight = FontWeight.SemiBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = lat,
                             onValueChange = { lat = it },
-                            label = { Text("Breite") },
+                            label = { Text(stringResource(R.string.settings_latitude)) },
                             isError = !latOk,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -179,7 +179,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = lon,
                             onValueChange = { lon = it },
-                            label = { Text("Länge") },
+                            label = { Text(stringResource(R.string.settings_longitude)) },
                             isError = !lonOk,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -196,14 +196,14 @@ fun SettingsScreen(
                         enabled = gpsLat != null && gpsLon != null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (gpsLat != null) "Aktuelle GPS-Position übernehmen" else "Warte auf GPS-Position …")
+                        Text(if (gpsLat != null) stringResource(R.string.settings_use_current_gps) else stringResource(R.string.settings_waiting_gps))
                     }
 
                     OutlinedTextField(
                         value = maxDist,
                         onValueChange = { maxDist = it.filter(Char::isDigit).take(6) },
-                        label = { Text("Max. Abstand zum Standort (m)") },
-                        supportingText = { Text("Hat das Handy eine GPS-Position und ist weiter entfernt, startet „Stationär“ nicht. Ohne GPS-Position wird nicht geprüft.") },
+                        label = { Text(stringResource(R.string.settings_max_dist_label)) },
+                        supportingText = { Text(stringResource(R.string.settings_max_dist_help)) },
                         isError = !distOk,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -221,7 +221,7 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
-                Text("Speichern", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.settings_action_save), fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(8.dp))
         }

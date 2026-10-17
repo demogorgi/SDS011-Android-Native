@@ -138,9 +138,9 @@ public final class MeasurementForegroundService extends Service implements Locat
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    "Messfahrt", NotificationManager.IMPORTANCE_LOW);
+                    getString(R.string.foreground_channel), NotificationManager.IMPORTANCE_LOW);
             channel.setDescription(
-                    "Bluetooth-Messung und GPS-Aufzeichnung bleiben im Hintergrund aktiv");
+                    getString(R.string.foreground_description));
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -154,8 +154,8 @@ public final class MeasurementForegroundService extends Service implements Locat
                 : new Notification.Builder(this);
         return builder.setSmallIcon(android.R.drawable.ic_menu_mylocation)
                 .setContentTitle(trackLocation
-                        ? "SDS011-Messfahrt läuft" : "SDS011-Messung läuft")
-                .setContentText(trackLocation ? "GPS-Aufzeichnung aktiv" : "Sensor verbunden")
+                        ? getString(R.string.foreground_trip_running) : getString(R.string.foreground_measurement_running))
+                .setContentText(trackLocation ? getString(R.string.foreground_gps_active) : getString(R.string.foreground_sensor_connected))
                 .setOngoing(true)
                 .build();
     }

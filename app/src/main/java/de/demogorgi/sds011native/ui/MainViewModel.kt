@@ -69,6 +69,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
     private var simulationJob: kotlinx.coroutines.Job? = null
 
     fun loadDevices(context: Context) {
+        appContext = context.applicationContext
         val adapter = BluetoothAdapter.getDefaultAdapter()
         val bondedDevices = if (adapter != null &&
             (Build.VERSION.SDK_INT < 31 || context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED)
@@ -76,7 +77,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
             try {
                 adapter.bondedDevices?.map {
                     de.demogorgi.sds011native.ui.state.SensorDevice(
-                        name = it.name ?: "Unbenanntes Gerät",
+                        name = it.name ?: context.getString(de.demogorgi.sds011native.R.string.error_unpaired_device),
                         address = it.address,
                         isSimulated = false,
                         bluetoothDevice = it
@@ -106,7 +107,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
     fun connectSelectedDevice(context: Context) {
         val device = _uiState.value.selectedDevice
         if (device == null) {
-            _uiState.update { it.copy(errorMessage = "Bitte zuerst ein Gerät auswählen") }
+            _uiState.update { it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_choose_device)) }
             return
         }
 
@@ -136,7 +137,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         val adapter = BluetoothAdapter.getDefaultAdapter() ?: return
         val btDev = device.bluetoothDevice
         if (btDev == null) {
-            _uiState.update { it.copy(errorMessage = "Bluetooth-Gerät nicht verfügbar") }
+            _uiState.update { it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_bluetooth_unavailable)) }
             return
         }
 
@@ -192,6 +193,8 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
 
     private var appContext: Context? = null
 
+    private fun uiText(resourceId: Int, vararg args: Any): String = appContext?.getString(resourceId, *args) ?: ""
+
     fun loadSettings(context: Context) {
         appContext = context.applicationContext
         if (settingsStore != null) return
@@ -220,7 +223,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
     fun setInterval(seconds: Int) {
         val effective = if (_uiState.value.mode != MeasurementMode.INACTIVE) _uiState.value.mode else _uiState.value.pendingMode
         if (effective == MeasurementMode.STATIONARY && seconds < AppModel.POWER_SAVE_MIN_INTERVAL) {
-            _uiState.update { it.copy(errorMessage = "Stationär nur 5 oder 15 min") }
+            _uiState.update { it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_stationary_interval)) }
             return
         }
         appModel.intervalSeconds = seconds
@@ -230,7 +233,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
 
     fun startMeasurement(context: Context) {
         if (!appModel.isConnected) {
-            _uiState.update { it.copy(errorMessage = "Erst Sensor verbinden") }
+            _uiState.update { it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_connect_sensor_first)) }
             return
         }
         val targetMode = _uiState.value.pendingMode
@@ -246,7 +249,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
                 val dist = settings.distanceTo(s.gpsLat, s.gpsLon)
                 if (dist > settings.maxDistanceM) {
                     _uiState.update {
-                        it.copy(errorMessage = "Stationär nur am Sensorstandort: ${dist.toInt()} m entfernt (max. ${settings.maxDistanceM} m)")
+                        it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_stationary_distance, dist.toInt(), settings.maxDistanceM))
                     }
                     return
                 }
@@ -255,6 +258,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         val rec = recorder ?: run {
             val dir = java.io.File(context.getExternalFilesDir(null) ?: context.filesDir, "Feinstaub")
             Recorder(
+                context.applicationContext,
                 dir,
                 onUpload = { info -> _uiState.update { it.copy(uploadInfo = info) } },
                 onError = { msg -> _uiState.update { it.copy(errorMessage = msg) } }
@@ -270,7 +274,7 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         }
         val isSimulated = _uiState.value.selectedDevice?.isSimulated == true
         if (targetMode == MeasurementMode.STATIONARY && isSimulated) {
-            _uiState.update { it.copy(errorMessage = "Simulation: Öffentlicher Upload zu sensor.community deaktiviert") }
+            _uiState.update { it.copy(errorMessage = uiText(de.demogorgi.sds011native.R.string.error_simulated_upload)) }
         }
         rec.sensorId = settings.sensorId
         rec.uploadEnabled = settings.uploadEnabled && !isSimulated
@@ -326,11 +330,12 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
             val wasRecording = activeMode != MeasurementMode.INACTIVE
             appModel.isConnected = false
             resetPowerSave()
-            val failed = message != null && message != "getrennt"
+            val failed = message != null && message != "sensor_disconnected"
+            val displayMessage = message?.let(::localizedConnectionMessage)
 
             if (wasRecording && failed) {
                 appContext?.let { ctx ->
-                    de.demogorgi.sds011native.util.NotificationHelper.showConnectionLostAlert(ctx, activeMode.label)
+                    de.demogorgi.sds011native.util.NotificationHelper.showConnectionLostAlert(ctx, ctx.getString(activeMode.labelRes))
                 }
             }
 
@@ -338,11 +343,30 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
                 it.copy(
                     connectionStatus = if (failed) "Verbindung verloren" else "getrennt",
                     isConnected = false,
-                    errorMessage = if (failed) message else it.errorMessage
+                    errorMessage = if (failed) displayMessage else it.errorMessage
                 )
             }
             updateUiState()
         }
+    }
+
+    private fun localizedConnectionMessage(message: String): String {
+        val ctx = appContext ?: return message
+        val parts = message.split("; retry in ", limit = 2)
+        val resourceId = when {
+            message.startsWith("sensor_data_timeout") -> de.demogorgi.sds011native.R.string.connection_sensor_data_timeout
+            message.startsWith("sensor_connection_aborted") -> de.demogorgi.sds011native.R.string.connection_sensor_aborted
+            message.startsWith("sensor_connection_interrupted") -> de.demogorgi.sds011native.R.string.connection_sensor_interrupted
+            message.startsWith("sensor_unresponsive") -> de.demogorgi.sds011native.R.string.connection_sensor_unresponsive
+            message.startsWith("connection_timeout") -> de.demogorgi.sds011native.R.string.connection_timeout
+            message.startsWith("bluetooth_permission_missing") -> de.demogorgi.sds011native.R.string.error_bluetooth_unavailable
+            else -> return message
+        }
+        val translated = ctx.getString(resourceId)
+        val retrySeconds = parts.getOrNull(1)?.substringBefore(" s")?.toIntOrNull()
+        return if (retrySeconds != null) {
+            ctx.getString(de.demogorgi.sds011native.R.string.connection_retry, translated, retrySeconds)
+        } else translated
     }
 
     private fun handleReading(reading: Reading) {

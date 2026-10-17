@@ -19,10 +19,10 @@ object NotificationHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val alertChannel = NotificationChannel(
                 CHANNEL_ALERT_ID,
-                "Sensor Warnungen",
+                context.getString(R.string.notification_channel),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Mitteilungen bei Verbindungsabbruch während der Messung"
+                description = context.getString(R.string.notification_channel_desc)
                 enableVibration(true)
                 setShowBadge(true)
             }
@@ -47,8 +47,8 @@ object NotificationHelper {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Messung unterbrochen!")
-            .setContentText("Bluetooth-Verbindung zum Sensor wurde getrennt ($modeLabel).")
+            .setContentTitle(context.getString(R.string.notification_measurement_interrupted))
+            .setContentText(context.getString(R.string.notification_connection_lost, modeLabel))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)

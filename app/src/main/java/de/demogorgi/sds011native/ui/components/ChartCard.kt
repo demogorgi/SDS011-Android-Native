@@ -50,6 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import de.demogorgi.sds011native.R
 import de.demogorgi.sds011native.model.HistoryPoint
 import de.demogorgi.sds011native.ui.theme.AqiHigh
 import de.demogorgi.sds011native.ui.theme.BrandPurple
@@ -168,7 +170,8 @@ fun ChartCard(
 
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (rawChart) "Rohwerte" else "Mittelwerte je ${formatInterval(intervalSeconds)}",
+                text = if (rawChart) androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.chart_subtitle_raw)
+                else androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.chart_subtitle_means, formatInterval(intervalSeconds)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -201,6 +204,8 @@ fun DustChartCanvas(
     val measurer = rememberTextMeasurer()
     val axisStyle = TextStyle(fontSize = 12.sp, color = muted)
     val endStyle = TextStyle(fontSize = 14.sp, color = onSurface, fontWeight = FontWeight.SemiBold)
+    val elevatedLabel = stringResource(R.string.aqi_elevated)
+    val highLabel = stringResource(R.string.aqi_high)
 
     if (points.size < 2) {
         Box(
@@ -210,7 +215,7 @@ fun DustChartCanvas(
                 .background(plotBg)
         ) {
             Text(
-                text = "Noch nicht genügend Datenpunkte",
+                text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.chart_insufficient_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = muted
             )
@@ -266,15 +271,15 @@ fun DustChartCanvas(
         while (v <= yMax + 1e-6) {
             val y = yOf(v)
             drawLine(gridColor, Offset(left, y), Offset(left + plotW, y), 1.dp.toPx())
-            val label = measurer.measure(String.format(Locale.GERMANY, "%.0f", v), axisStyle)
+            val label = measurer.measure(String.format(Locale.getDefault(), "%.0f", v), axisStyle)
             drawText(label, topLeft = Offset(left - 6.dp.toPx() - label.size.width, y - label.size.height / 2f))
             v += step
         }
 
         val thresholds = listOf(
-            Triple(25.0, "PM2.5 erhöht", BrandTeal),
-            Triple(40.0, "PM10 erhöht", BrandPurple),
-            Triple(50.0, "hoch", AqiHigh)
+            Triple(25.0, "PM2.5 $elevatedLabel", BrandTeal),
+            Triple(40.0, "PM10 $elevatedLabel", BrandPurple),
+            Triple(50.0, highLabel, AqiHigh)
         )
         val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
         for ((value, text, color) in thresholds) {
@@ -287,7 +292,7 @@ fun DustChartCanvas(
 
         val spanSec = (maxT - minT) / 1000L
         val tickSec = timeSteps.firstOrNull { spanSec / it <= 4 } ?: 86400L
-        val fmt = SimpleDateFormat(if (tickSec < 60) "HH:mm:ss" else "HH:mm", Locale.GERMANY)
+        val fmt = SimpleDateFormat(if (tickSec < 60) "HH:mm:ss" else "HH:mm", Locale.getDefault())
         val tickMs = tickSec * 1000L
         val offsetMs = TimeZone.getDefault().getOffset(minT).toLong()
         var t = ((minT + offsetMs) / tickMs + 1) * tickMs - offsetMs
@@ -322,7 +327,7 @@ fun DustChartCanvas(
             val last = points.last()
             val c = Offset(xOf(last.epochMillis), yOf(selector(last)))
             drawCircle(color, radius = 5.dp.toPx(), center = c)
-            val text = measurer.measure(String.format(Locale.GERMANY, "%.1f", selector(last)), endStyle)
+            val text = measurer.measure(String.format(Locale.getDefault(), "%.1f", selector(last)), endStyle)
             drawText(text, topLeft = Offset(c.x + 8.dp.toPx(), c.y - text.size.height / 2f))
         }
 
@@ -335,9 +340,9 @@ fun DustChartCanvas(
             drawLine(onSurface.copy(alpha = 0.5f), Offset(x, top), Offset(x, top + plotH), 1.dp.toPx())
             drawCircle(BrandPurple, 5.dp.toPx(), Offset(x, yOf(sel.pm10)))
             drawCircle(BrandTeal, 5.dp.toPx(), Offset(x, yOf(sel.pm25)))
-            val l1 = measurer.measure(SimpleDateFormat("HH:mm:ss", Locale.GERMANY).format(Date(sel.epochMillis)), tipStyle.copy(fontWeight = FontWeight.Bold))
-            val l2 = measurer.measure(String.format(Locale.GERMANY, "PM2.5  %.1f", sel.pm25), tipStyle.copy(color = BrandTeal))
-            val l3 = measurer.measure(String.format(Locale.GERMANY, "PM10  %.1f", sel.pm10), tipStyle.copy(color = BrandPurple))
+            val l1 = measurer.measure(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(sel.epochMillis)), tipStyle.copy(fontWeight = FontWeight.Bold))
+            val l2 = measurer.measure(String.format(Locale.getDefault(), "PM2.5  %.1f", sel.pm25), tipStyle.copy(color = BrandTeal))
+            val l3 = measurer.measure(String.format(Locale.getDefault(), "PM10  %.1f", sel.pm10), tipStyle.copy(color = BrandPurple))
             val pad = 8.dp.toPx()
             val w = maxOf(l1.size.width, l2.size.width, l3.size.width) + 2 * pad
             val h = l1.size.height + l2.size.height + l3.size.height + 2 * pad

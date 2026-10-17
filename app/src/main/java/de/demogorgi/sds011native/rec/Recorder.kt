@@ -1,5 +1,7 @@
 package de.demogorgi.sds011native.rec
 
+import android.content.Context
+import de.demogorgi.sds011native.R
 import de.demogorgi.sds011native.model.HistoryPoint
 import de.demogorgi.sds011native.model.MeasurementMode
 import org.json.JSONArray
@@ -21,6 +23,7 @@ data class UploadInfo(val atMillis: Long, val ok: Boolean, val message: String)
  * Python-Version.
  */
 class Recorder(
+    private val context: Context,
     private val outDir: File,
     private val onUpload: (UploadInfo) -> Unit,
     private val onError: (String) -> Unit
@@ -112,7 +115,7 @@ class Recorder(
                     try {
                         f.appendText("  </Document>\n</kml>\n")
                     } catch (e: Exception) {
-                        onError("KML-Fehler: ${e.message}")
+                        onError(context.getString(R.string.recorder_kml_error, e.message.orEmpty()))
                     }
                 }
             }
@@ -160,7 +163,7 @@ class Recorder(
                     .replace(".", ",")
                 file.appendText((if (isNew) CSV_HEADER + "\n" else "") + line + "\n")
             } catch (e: Exception) {
-                onError("Schreibfehler: ${e.message}")
+                onError(context.getString(R.string.recorder_file_error, e.message.orEmpty()))
             }
         }
         if (currentMode == MeasurementMode.STATIONARY && uploadEnabled) {
@@ -211,15 +214,15 @@ class Recorder(
             conn.outputStream.use { it.write(body.toByteArray()) }
             val code = conn.responseCode
             conn.disconnect()
-            if (code == 201) UploadInfo(System.currentTimeMillis(), true, "PM2.5 $t25 · PM10 $t10 übertragen")
-            else UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen (Server-Antwort $code)")
+            if (code == 201) UploadInfo(System.currentTimeMillis(), true, context.getString(R.string.upload_success, t25, t10))
+            else UploadInfo(System.currentTimeMillis(), false, context.getString(R.string.upload_failed_response, code))
         } catch (e: Exception) {
             val errReason = when {
-                e is java.net.UnknownHostException -> "Keine Internetverbindung"
-                e is java.net.SocketTimeoutException -> "Zeitüberschreitung beim Server-Upload"
-                else -> "Server nicht erreichbar"
+                e is java.net.UnknownHostException -> context.getString(R.string.upload_no_internet)
+                e is java.net.SocketTimeoutException -> context.getString(R.string.upload_timeout)
+                else -> context.getString(R.string.upload_server_unavailable)
             }
-            UploadInfo(System.currentTimeMillis(), false, "Upload fehlgeschlagen ($errReason)")
+            UploadInfo(System.currentTimeMillis(), false, context.getString(R.string.upload_failed, errReason))
         }
         onUpload(info)
     }

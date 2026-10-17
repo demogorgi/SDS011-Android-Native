@@ -61,7 +61,7 @@ fun AboutDialog(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = "Logo",
+                        contentDescription = stringResource(R.string.app_logo_description),
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -72,7 +72,7 @@ fun AboutDialog(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        "Version 0.1.0",
+                        stringResource(R.string.app_version, "0.1.0"),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -108,7 +108,7 @@ fun AboutDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Schließen")
+                Text(stringResource(R.string.action_close))
             }
         }
     )
@@ -173,7 +173,7 @@ private fun HardwareWiringTab() {
 private fun LicensesTab() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            "MIT License",
+            stringResource(R.string.about_license_text).substringBefore("\n\n"),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -185,9 +185,7 @@ private fun LicensesTab() {
         ) {
             Column(Modifier.padding(12.dp)) {
                 Text(
-                    "Copyright (c) 2026 Uwe Gotzes / demogorgi\n\n" +
-                        "Permission is hereby granted, free of charge, to any person obtaining a copy " +
-                        "of this software... THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND.",
+                    stringResource(R.string.about_license_text).substringAfter("\n\n"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -195,12 +193,12 @@ private fun LicensesTab() {
         }
 
         Text(
-            "Open Source Danksagung",
+            stringResource(R.string.about_open_source),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            "• Jetpack Compose & Material 3 (Apache 2.0)\n• Kotlin & AndroidX (Apache 2.0)\n• sensor.community (Luftdaten.info API)",
+            stringResource(R.string.about_credits),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

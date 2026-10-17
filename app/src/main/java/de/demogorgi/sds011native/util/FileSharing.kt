@@ -4,13 +4,14 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import de.demogorgi.sds011native.R
 import java.io.File
 
 object FileSharing {
 
     fun shareFile(context: Context, file: File) {
         if (!file.exists()) {
-            Toast.makeText(context, "Datei nicht gefunden: ${file.name}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.share_file_missing, file.name), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -34,16 +35,16 @@ object FileSharing {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(intent, "Datei teilen (${file.name})"))
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_file_chooser, file.name)))
         } catch (e: Exception) {
-            Toast.makeText(context, "Fehler beim Teilen: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.share_error, e.message.orEmpty()), Toast.LENGTH_LONG).show()
         }
     }
 
     fun shareFiles(context: Context, files: List<File>) {
         val validFiles = files.filter { it.exists() }
         if (validFiles.isEmpty()) {
-            Toast.makeText(context, "Keine Dateien zum Teilen gefunden", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.share_none), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -67,9 +68,9 @@ object FileSharing {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(intent, "${validFiles.size} Dateien teilen"))
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_files_count, validFiles.size)))
         } catch (e: Exception) {
-            Toast.makeText(context, "Fehler beim Teilen: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.share_error, e.message.orEmpty()), Toast.LENGTH_LONG).show()
         }
     }
 }

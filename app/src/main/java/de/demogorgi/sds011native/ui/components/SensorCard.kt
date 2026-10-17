@@ -86,7 +86,7 @@ fun SensorCard(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = selectedDevice?.name ?: "SDS011 Sensor",
+                            text = if (selectedDevice?.isSimulated == true) androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.simulated_device_name) else selectedDevice?.name ?: "SDS011 Sensor",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1
@@ -116,14 +116,14 @@ fun SensorCard(
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
-                            value = selectedDevice?.name ?: "SDS011 simuliert",
+                            value = if (selectedDevice?.isSimulated == true) androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.simulated_device_name) else selectedDevice?.name ?: androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.simulated_device_name),
                             onValueChange = {},
                             readOnly = true,
                             label = { Text(androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.label_select_device)) },
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = "Gerät wählen",
+                                    contentDescription = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.action_choose_device),
                                     modifier = Modifier.clickable { expanded = true }
                                 )
                             },
@@ -146,7 +146,7 @@ fun SensorCard(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            text = device.name,
+                                            text = if (device.isSimulated) androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.simulated_device_name) else device.name,
                                             fontWeight = FontWeight.Medium
                                         )
                                     },
@@ -164,7 +164,7 @@ fun SensorCard(
                     IconButton(onClick = onReloadDevices) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Geräte neu laden"
+                            contentDescription = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.action_reload_devices)
                         )
                     }
                 }

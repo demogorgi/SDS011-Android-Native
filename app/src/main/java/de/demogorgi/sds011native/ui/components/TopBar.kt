@@ -49,6 +49,14 @@ fun TopBar(
     onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val localizedStatus = when (statusText.lowercase()) {
+        "getrennt" -> stringResource(R.string.status_disconnected)
+        "verbunden" -> stringResource(R.string.status_connected)
+        "verbunden (simuliert)" -> stringResource(R.string.status_connected_simulated)
+        "verbinde ...", "verbinde …" -> stringResource(R.string.status_connecting)
+        "verbindung verloren" -> stringResource(R.string.status_connection_lost)
+        else -> statusText
+    }
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -82,7 +90,7 @@ fun TopBar(
             }
         },
         actions = {
-            StatusPill(statusText = statusText, isConnected = isConnected)
+            StatusPill(statusText = localizedStatus, isConnected = isConnected)
             IconButton(onClick = onAboutClick) {
                 Icon(
                     imageVector = Icons.Default.Info,
@@ -107,7 +115,7 @@ fun StatusPill(
     val dotColor by animateColorAsState(
         targetValue = when {
             isConnected -> AqiGood
-            statusText.contains("verbinde", ignoreCase = true) -> Color(0xFFFFB300)
+            statusText.contains("verbinde", ignoreCase = true) || statusText.contains("connecting", ignoreCase = true) -> Color(0xFFFFB300)
             else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         },
         label = "statusDotColor"
@@ -141,7 +149,7 @@ fun StatusPill(
 }
 
 fun formatElapsed(seconds: Long): String =
-    String.format(java.util.Locale.GERMANY, "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
+    String.format(java.util.Locale.getDefault(), "%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
 
 @Composable
 private fun GearIcon(color: Color) {

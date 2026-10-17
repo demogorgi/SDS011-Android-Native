@@ -52,9 +52,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import de.demogorgi.sds011native.R
 import de.demogorgi.sds011native.model.MeasurementMode
 import de.demogorgi.sds011native.rec.UploadInfo
 import de.demogorgi.sds011native.ui.state.LastSession
@@ -108,7 +110,7 @@ fun MeasurementCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.card_measurement_title),
+                    text = stringResource(R.string.card_measurement_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -120,7 +122,7 @@ fun MeasurementCard(
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Dateien", fontSize = 12.sp)
+                    Text(stringResource(R.string.action_files), fontSize = 12.sp)
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -133,39 +135,49 @@ fun MeasurementCard(
                     Spacer(Modifier.height(12.dp))
                 }
                 ModeCard(
-                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_observe_title),
-                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_observe_desc),
+                    title = stringResource(R.string.mode_observe_title),
+                    description = stringResource(R.string.mode_observe_desc),
                     icon = Icons.Default.Info,
                     selected = pendingMode == MeasurementMode.INACTIVE,
                     onClick = { onPendingModeChange(MeasurementMode.INACTIVE) }
                 ) {}
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_trip_title),
-                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_trip_desc),
+                    title = stringResource(R.string.mode_trip_title),
+                    description = stringResource(R.string.mode_trip_desc),
                     icon = Icons.Default.Send,
                     selected = pendingMode == MeasurementMode.TRIP,
                     onClick = { onPendingModeChange(MeasurementMode.TRIP) }
                 ) {
-                    NameField("Name der Messfahrt", "z. B. Von Essen nach Duisburg", tripName, onTripNameChange,
-                        "Erscheint im Dateinamen. Ohne Name heißen die Dateien nur nach Zeitstempel.")
+                    NameField(
+                        stringResource(R.string.name_field_trip_label),
+                        stringResource(R.string.name_field_trip_placeholder),
+                        tripName,
+                        onTripNameChange,
+                        stringResource(R.string.name_field_trip_help)
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_local_title),
-                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_local_desc),
+                    title = stringResource(R.string.mode_local_title),
+                    description = stringResource(R.string.mode_local_desc),
                     icon = Icons.Default.Place,
                     selected = pendingMode == MeasurementMode.LOCAL,
                     onClick = { onPendingModeChange(MeasurementMode.LOCAL) }
                 ) {
-                    NameField("Ort", "z. B. Kletterhalle", placeName, onPlaceNameChange,
-                        "Erscheint im Dateinamen. Ohne Ort heißt die Datei „lokal“.")
+                    NameField(
+                        stringResource(R.string.name_field_place_label),
+                        stringResource(R.string.name_field_place_placeholder),
+                        placeName,
+                        onPlaceNameChange,
+                        stringResource(R.string.name_field_place_help)
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
                 ModeCard(
-                    title = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_stationary_title),
-                    badge = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.badge_public),
-                    description = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.mode_stationary_desc),
+                    title = stringResource(R.string.mode_stationary_title),
+                    badge = stringResource(R.string.badge_public),
+                    description = stringResource(R.string.mode_stationary_desc),
                     icon = Icons.Default.Home,
                     selected = pendingMode == MeasurementMode.STATIONARY,
                     onClick = { onPendingModeChange(MeasurementMode.STATIONARY) }
@@ -176,13 +188,12 @@ fun MeasurementCard(
                     ) {
                         Column(Modifier.padding(12.dp)) {
                             Text(
-                                "Öffentlicher Upload",
+                                stringResource(R.string.stationary_warning_title),
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                "Jeder neue Mittelwert geht an sensor.community und erscheint dort. " +
-                                    "Nur am vereinbarten Standort starten. Dafür sind nur 5 oder 15 min wählbar.",
+                                stringResource(R.string.stationary_warning_text),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -193,7 +204,7 @@ fun MeasurementCard(
 
             Spacer(Modifier.height(20.dp))
             Text(
-                text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.interval_title),
+                text = stringResource(R.string.interval_title),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -205,9 +216,9 @@ fun MeasurementCard(
             )
             Text(
                 text = when (shownMode) {
-                    MeasurementMode.INACTIVE -> "Alle ${formatInterval(intervalSeconds)} wird gemittelt und gezeichnet."
-                    MeasurementMode.STATIONARY -> "Alle ${formatInterval(intervalSeconds)} wird gemittelt, gezeichnet, gespeichert und gesendet."
-                    else -> "Alle ${formatInterval(intervalSeconds)} wird gemittelt, gezeichnet und gespeichert."
+                    MeasurementMode.INACTIVE -> stringResource(R.string.interval_info_observe, formatInterval(intervalSeconds))
+                    MeasurementMode.STATIONARY -> stringResource(R.string.interval_info_stationary, formatInterval(intervalSeconds))
+                    else -> stringResource(R.string.interval_info_record, formatInterval(intervalSeconds))
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -224,12 +235,12 @@ fun MeasurementCard(
                 ) {
                     Box(Modifier.size(16.dp).clip(RoundedCornerShape(3.dp)).background(Color.White))
                     Spacer(Modifier.width(10.dp))
-                    Text(androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.stop_measurement), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.stop_measurement), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             } else if (shownMode == MeasurementMode.INACTIVE) {
                 Text(
-                    text = if (isConnected) "Läuft automatisch, solange der Sensor verbunden ist. Für eine Aufzeichnung oben einen Auftrag wählen."
-                    else "Zuerst oben den Sensor verbinden.",
+                    text = if (isConnected) stringResource(R.string.observe_auto_info)
+                    else stringResource(R.string.connect_sensor_first),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -244,14 +255,14 @@ fun MeasurementCard(
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.start_measurement, androidx.compose.ui.res.stringResource(shownMode.labelRes)),
+                        stringResource(R.string.start_measurement, stringResource(shownMode.labelRes)),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 if (!isConnected) {
                     Text(
-                        text = "Zuerst oben den Sensor verbinden.",
+                        text = stringResource(R.string.connect_sensor_first),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -290,7 +301,7 @@ private fun RunningPanel(
                 LiveIndicatorDot(isActive = true, color = AqiHigh)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "${mode.label} aktiv",
+                    stringResource(R.string.measurement_active, stringResource(mode.labelRes)),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -302,13 +313,14 @@ private fun RunningPanel(
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             Row(Modifier.fillMaxWidth()) {
-                Stat("Punkte", points.toString(), Modifier.weight(1f))
-                Stat("Ø PM2.5", if (points > 0) fmt1(avg25) else "–", Modifier.weight(1f))
-                Stat("Ø PM10", if (points > 0) fmt1(avg10) else "–", Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_duration), formatElapsed(elapsedSeconds), Modifier.weight(1.3f))
+                Stat(stringResource(R.string.stat_points), points.toString(), Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_avg25), if (points > 0) fmt1(avg25) else "–", Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_avg10), if (points > 0) fmt1(avg10) else "–", Modifier.weight(1f))
             }
             if (mode == MeasurementMode.STATIONARY) {
                 Text(
-                    text = upload?.let { (if (it.ok) "Upload ok: " else "") + it.message } ?: "Noch kein Upload",
+                    text = upload?.let { (if (it.ok) stringResource(R.string.upload_ok_prefix) else "") + it.message } ?: stringResource(R.string.upload_none_yet),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (upload != null && !upload.ok) AqiHigh else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -316,7 +328,7 @@ private fun RunningPanel(
             }
             if (file != null) {
                 Text(
-                    text = "Datei $file",
+                    text = stringResource(R.string.file_label, file),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -415,7 +427,7 @@ private fun ModeCard(
     }
 }
 
-private fun fmt1(v: Double) = String.format(java.util.Locale.GERMANY, "%.1f", v)
+private fun fmt1(v: Double) = String.format(Locale.getDefault(), "%.1f", v)
 
 @Composable
 private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
@@ -445,7 +457,7 @@ private fun LastSessionPanel(last: LastSession, outDirPath: String) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    "Letzte Messung · ${last.mode.label}",
+                    stringResource(R.string.last_session_title, stringResource(last.mode.labelRes)),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -460,17 +472,17 @@ private fun LastSessionPanel(last: LastSession, outDirPath: String) {
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Teilen", fontSize = 12.sp)
+                            Text(stringResource(R.string.action_share), fontSize = 12.sp)
                         }
                     }
                 }
             }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
-                Stat("Dauer", formatElapsed(last.durationSeconds), Modifier.weight(1.3f))
-                Stat("Punkte", last.points.toString(), Modifier.weight(1f))
-                Stat("Ø 2.5", if (last.points > 0) fmt1(last.avg25) else "–", Modifier.weight(1f))
-                Stat("Ø 10", if (last.points > 0) fmt1(last.avg10) else "–", Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_duration), formatElapsed(last.durationSeconds), Modifier.weight(1.3f))
+                Stat(stringResource(R.string.stat_points), last.points.toString(), Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_avg25), if (last.points > 0) fmt1(last.avg25) else "–", Modifier.weight(1f))
+                Stat(stringResource(R.string.stat_avg10), if (last.points > 0) fmt1(last.avg10) else "–", Modifier.weight(1f))
             }
             if (last.fileName != null) {
                 Text(
@@ -501,18 +513,18 @@ private fun SavedFilesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Gespeicherte Messdateien", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.dialog_saved_files_title), fontWeight = FontWeight.Bold) },
         text = {
             if (filesList.isEmpty()) {
-                Text("Bisher keine CSV- oder KML-Dateien gespeichert.")
+                Text(stringResource(R.string.dialog_no_saved_files))
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.height(280.dp)
                 ) {
                     items(filesList) { file ->
-                        val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY).format(Date(file.lastModified()))
-                        val sizeKb = String.format(Locale.GERMANY, "%.1f kB", file.length() / 1024.0)
+                        val dateStr = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(file.lastModified()))
+                        val sizeKb = String.format(Locale.getDefault(), "%.1f kB", file.length() / 1024.0)
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -544,7 +556,7 @@ private fun SavedFilesDialog(
                                     ) {
                                         Icon(
                                             Icons.Default.Share,
-                                            contentDescription = "Teilen",
+                                            contentDescription = stringResource(R.string.action_share),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -561,7 +573,7 @@ private fun SavedFilesDialog(
                                     ) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = "Löschen",
+                                            contentDescription = stringResource(R.string.action_delete),
                                             tint = MaterialTheme.colorScheme.error,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -578,13 +590,13 @@ private fun SavedFilesDialog(
                 Button(onClick = { FileSharing.shareFiles(context, filesList) }) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Alle teilen")
+                    Text(stringResource(R.string.action_share_all))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Schließen")
+                Text(stringResource(R.string.action_close))
             }
         }
     )

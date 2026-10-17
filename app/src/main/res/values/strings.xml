@@ -26,7 +26,19 @@
     <string name="reading_age_live">live · gerade eben</string>
     <string name="reading_age_seconds">letzter Wert vor %d s</string>
     <string name="sensor_paused">Sensor pausiert · nächste Messung in %s</string>
+    <string name="gps_active">GPS aktuell</string>
+    <string name="gps_searching">GPS sucht …</string>
+    <string name="gps_off">GPS aus</string>
     <string name="levels_explanation">Was bedeuten die Stufen?</string>
+
+    <string name="levels_header_level">Stufe</string>
+    <string name="level_good_desc_pm25">unter 25</string>
+    <string name="level_good_desc_pm10">unter 40</string>
+    <string name="level_elevated_desc_pm25">25 bis 50</string>
+    <string name="level_elevated_desc_pm10">40 bis 50</string>
+    <string name="level_high_desc_pm25">ab 50</string>
+    <string name="level_high_desc_pm10">ab 50</string>
+    <string name="levels_body_text">Werte in µg/m³. Die Schwellen sind EU-Grenzwerte: 25 und 40 µg/m³ gelten für das Jahresmittel von PM2.5 und PM10, 50 µg/m³ für das Tagesmittel von PM10. Ein einzelner Messwert darüber ist noch kein Verstoß, zeigt aber, wie stark die Luft gerade belastet ist.</string>
 
     <!-- Sensor Connection Card -->
     <string name="card_sensor_title">Sensor Verbindung</string>
@@ -39,6 +51,8 @@
     <string name="card_chart_title">Verlaufsdiagramm</string>
     <string name="series_means">Mittelwerte</string>
     <string name="series_raw">Rohwerte</string>
+    <string name="chart_subtitle_means">Mittelwerte je %s</string>
+    <string name="chart_subtitle_raw">Rohwerte (1 Hz)</string>
     <string name="range_10m">10 min</string>
     <string name="range_1h">1 h</string>
     <string name="range_6h">6 h</string>
@@ -58,9 +72,39 @@
     <string name="mode_stationary_desc">Upload zu sensor.community mit jedem neuen Mittelwert, dazu CSV</string>
     <string name="badge_public">öffentlich</string>
 
+    <string name="stationary_warning_title">Öffentlicher Upload</string>
+    <string name="stationary_warning_text">Jeder neue Mittelwert geht an sensor.community und erscheint dort. Nur am vereinbarten Standort starten. Dafür sind nur 5 oder 15 min wählbar.</string>
+
+    <string name="name_field_trip_label">Name der Messfahrt</string>
+    <string name="name_field_trip_placeholder">z. B. Von Essen nach Duisburg</string>
+    <string name="name_field_trip_help">Erscheint im Dateinamen. Ohne Name heißen die Dateien nur nach Zeitstempel.</string>
+    <string name="name_field_place_label">Ort</string>
+    <string name="name_field_place_placeholder">z. B. Kletterhalle</string>
+    <string name="name_field_place_help">Erscheint im Dateinamen. Ohne Ort heißt die Datei „lokal“.</string>
+
     <string name="interval_title">Mittelwert-Takt</string>
+    <string name="interval_info_observe">Alle %s wird gemittelt und gezeichnet.</string>
+    <string name="interval_info_record">Alle %s wird gemittelt, gezeichnet und gespeichert.</string>
+    <string name="interval_info_stationary">Alle %s wird gemittelt, gezeichnet, gespeichert und gesendet.</string>
+    <string name="powersave_info">Energiesparmodus: 15s Einschwingen, 30s Mittelung vor dem Schlafen</string>
+    <string name="observe_auto_info">Läuft automatisch, solange der Sensor verbunden ist. Für eine Aufzeichnung oben einen Auftrag wählen.</string>
+    <string name="connect_sensor_first">Zuerst oben den Sensor verbinden.</string>
+
     <string name="start_measurement">%s starten</string>
     <string name="stop_measurement">Stoppen</string>
+
+    <!-- File Sharing & Dialogs -->
+    <string name="action_files">Dateien</string>
+    <string name="action_share">Teilen</string>
+    <string name="action_share_all">Alle teilen</string>
+    <string name="action_close">Schließen</string>
+    <string name="dialog_saved_files_title">Gespeicherte Messdateien</string>
+    <string name="dialog_no_saved_files">Bisher keine CSV- oder KML-Dateien gespeichert.</string>
+    <string name="last_session_title">Letzte Messung · %s</string>
+    <string name="stat_duration">Dauer</string>
+    <string name="stat_points">Punkte</string>
+    <string name="stat_avg25">Ø 2.5</string>
+    <string name="stat_avg10">Ø 10</string>
 
     <!-- About Dialog & Hardware Wiring -->
     <string name="about_title">Über Feinstaub SDS011</string>
@@ -79,10 +123,73 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_theme_title">Darstellung</string>
     <string name="settings_language_title">Sprache / Language</string>
+    <string name="settings_stationary_title">Stationärer Upload</string>
+    <string name="settings_stationary_subtitle">Gilt für den Auftrag „Stationär“ und wird auf diesem Gerät gespeichert.</string>
+    <string name="settings_upload_label">Upload zu sensor.community</string>
+    <string name="settings_upload_enabled_desc">Mittelwerte werden gesendet.</string>
+    <string name="settings_upload_disabled_desc">Nur CSV, nichts wird gesendet.</string>
+    <string name="settings_sensor_id">Sensor-ID</string>
+    <string name="settings_sensor_location">Sensorstandort</string>
+    <string name="settings_latitude">Breite</string>
+    <string name="settings_longitude">Länge</string>
+    <string name="settings_use_current_gps">Aktuelle GPS-Position übernehmen</string>
+    <string name="settings_waiting_gps">Warte auf GPS-Position …</string>
+    <string name="settings_max_dist_label">Max. Abstand zum Standort (m)</string>
+    <string name="settings_max_dist_help">Hat das Handy eine GPS-Position und ist weiter entfernt, startet „Stationär“ nicht. Ohne GPS-Position wird nicht geprüft.</string>
+    <string name="settings_action_save">Speichern</string>
+
     <string name="theme_system">System</string>
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
     <string name="lang_system">System</string>
     <string name="lang_de">Deutsch</string>
     <string name="lang_en">English</string>
+    <string name="action_choose_device">Gerät wählen</string>
+    <string name="action_reload_devices">Geräte neu laden</string>
+    <string name="action_delete">Löschen</string>
+    <string name="about_open_source">Open-Source-Danksagung</string>
+    <string name="about_license_text">MIT License\n\nCopyright (c) 2026 Uwe Gotzes / demogorgi\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the Software), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
+    <string name="about_credits">• Jetpack Compose &amp; Material 3 (Apache 2.0)\n• Kotlin &amp; AndroidX (Apache 2.0)\n• sensor.community (Luftdaten.info API)</string>
+    <string name="measurement_active">%s aktiv</string>
+    <string name="upload_ok_prefix">Upload ok: </string>
+    <string name="upload_none_yet">Noch kein Upload</string>
+    <string name="file_label">Datei %s</string>
+    <string name="error_choose_device">Bitte zuerst ein Gerät auswählen</string>
+    <string name="error_bluetooth_unavailable">Bluetooth-Gerät nicht verfügbar</string>
+    <string name="error_stationary_interval">Stationär sind nur 5 oder 15 min möglich</string>
+    <string name="error_connect_sensor_first">Erst den Sensor verbinden</string>
+    <string name="error_stationary_distance">Stationär nur am Sensorstandort: %1$d m entfernt (max. %2$d m)</string>
+    <string name="error_simulated_upload">Simulation: Öffentlicher Upload zu sensor.community deaktiviert</string>
+    <string name="error_unpaired_device">Unbenanntes Gerät</string>
+    <string name="share_file_missing">Datei nicht gefunden: %s</string>
+    <string name="share_file_chooser">Datei teilen (%s)</string>
+    <string name="share_files_count">%d Dateien teilen</string>
+    <string name="share_none">Keine Dateien zum Teilen gefunden</string>
+    <string name="share_error">Fehler beim Teilen: %s</string>
+    <string name="notification_channel">Sensor-Warnungen</string>
+    <string name="notification_channel_desc">Mitteilungen bei Verbindungsabbruch während der Messung</string>
+    <string name="notification_measurement_interrupted">Messung unterbrochen!</string>
+    <string name="notification_connection_lost">Bluetooth-Verbindung zum Sensor wurde getrennt (%s).</string>
+    <string name="foreground_channel">Messfahrt</string>
+    <string name="foreground_description">Bluetooth-Messung und GPS-Aufzeichnung bleiben im Hintergrund aktiv</string>
+    <string name="foreground_trip_running">SDS011-Messfahrt läuft</string>
+    <string name="foreground_measurement_running">SDS011-Messung läuft</string>
+    <string name="foreground_gps_active">GPS-Aufzeichnung aktiv</string>
+    <string name="foreground_sensor_connected">Sensor verbunden</string>
+    <string name="connection_sensor_data_timeout">Keine Sensordaten empfangen</string>
+    <string name="connection_sensor_aborted">Sensor-Verbindung abgebrochen</string>
+    <string name="connection_sensor_interrupted">Sensor-Verbindung unterbrochen</string>
+    <string name="connection_sensor_unresponsive">Sensor antwortet nicht</string>
+    <string name="connection_timeout">Zeitüberschreitung bei der Verbindung</string>
+    <string name="connection_retry">%1$s; neuer Versuch in %2$d s</string>
+    <string name="recorder_file_error">Schreibfehler: %s</string>
+    <string name="recorder_kml_error">KML-Fehler: %s</string>
+    <string name="upload_success">PM2.5 %1$s · PM10 %2$s übertragen</string>
+    <string name="upload_failed_response">Upload fehlgeschlagen (Server-Antwort %d)</string>
+    <string name="upload_no_internet">Keine Internetverbindung</string>
+    <string name="upload_timeout">Zeitüberschreitung beim Server-Upload</string>
+    <string name="upload_server_unavailable">Server nicht erreichbar</string>
+    <string name="upload_failed">Upload fehlgeschlagen (%s)</string>
+    <string name="app_version">Version %s</string>
+    <string name="app_logo_description">App-Logo</string>
 </resources>

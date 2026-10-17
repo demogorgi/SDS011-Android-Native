@@ -148,9 +148,9 @@ fun LiveValuesCard(
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = when (gpsStatus) {
-                        GpsStatus.FIX -> "GPS aktuell"
-                        GpsStatus.SEARCHING -> "GPS sucht …"
-                        GpsStatus.NONE -> "GPS aus"
+                        GpsStatus.FIX -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.gps_active)
+                        GpsStatus.SEARCHING -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.gps_searching)
+                        GpsStatus.NONE -> androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.gps_off)
                     },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -187,14 +187,29 @@ fun LiveValuesCard(
             }
             AnimatedVisibility(visible = showLevels) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
-                    LevelRow("Stufe", "PM2.5", "PM10", header = true)
-                    LevelRow(AqiLevel.GOOD, "unter 25", "unter 40")
-                    LevelRow(AqiLevel.ELEVATED, "25 bis 50", "40 bis 50")
-                    LevelRow(AqiLevel.HIGH, "ab 50", "ab 50")
+                    LevelRow(
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.levels_header_level),
+                        "PM2.5",
+                        "PM10",
+                        header = true
+                    )
+                    LevelRow(
+                        AqiLevel.GOOD,
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_good_desc_pm25),
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_good_desc_pm10)
+                    )
+                    LevelRow(
+                        AqiLevel.ELEVATED,
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_elevated_desc_pm25),
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_elevated_desc_pm10)
+                    )
+                    LevelRow(
+                        AqiLevel.HIGH,
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_high_desc_pm25),
+                        androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.level_high_desc_pm10)
+                    )
                     Text(
-                        text = "Werte in µg/m³. Die Schwellen sind EU-Grenzwerte: 25 und 40 µg/m³ gelten für das " +
-                            "Jahresmittel von PM2.5 und PM10, 50 µg/m³ für das Tagesmittel von PM10. Ein einzelner " +
-                            "Messwert darüber ist noch kein Verstoß, zeigt aber, wie stark die Luft gerade belastet ist.",
+                        text = androidx.compose.ui.res.stringResource(de.demogorgi.sds011native.R.string.levels_body_text),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp)
@@ -277,7 +292,7 @@ fun MetricTile(
         }
 
         Text(
-            text = value?.let { String.format(Locale.GERMANY, "%.1f", it) } ?: "–",
+            text = value?.let { String.format(Locale.getDefault(), "%.1f", it) } ?: "–",
             style = MaterialTheme.typography.displayMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 52.sp

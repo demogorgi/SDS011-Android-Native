@@ -89,7 +89,7 @@ public final class SensorConnection {
         long retryDelaySeconds = 2L;
         while (isActive(connectionGeneration)) {
             BluetoothSocket localSocket = null;
-            String message = "Bluetooth-Fehler";
+            String message = "sensor_connection_interrupted";
             boolean permissionLost = false;
             try {
                 if (adapter != null) {
@@ -126,7 +126,7 @@ public final class SensorConnection {
                 while (isActive(connectionGeneration)) {
                     int n = input.read(buf);
                     if (n < 0) {
-                        message = "Sensor getrennt";
+                        message = "sensor_disconnected";
                         break;
                     }
                     List<Reading> readings = decoder.feed(buf, n);
@@ -141,7 +141,7 @@ public final class SensorConnection {
             } catch (IOException exc) {
                 message = formatIOException(exc, silenceTimedOut);
             } catch (SecurityException exc) {
-                message = "Bluetooth-Berechtigung fehlt";
+                message = "bluetooth_permission_missing";
                 permissionLost = true;
             } finally {
                 closeSocket(localSocket);
@@ -160,7 +160,7 @@ public final class SensorConnection {
                 listener.onDisconnected(message);
                 return;
             }
-            listener.onDisconnected(message + "; neuer Versuch in "
+            listener.onDisconnected(message + "; retry in "
                     + retryDelaySeconds + " s");
             try {
                 Thread.sleep(retryDelaySeconds * 1000L);
@@ -221,21 +221,21 @@ public final class SensorConnection {
 
     private static String formatIOException(IOException exc, boolean silenceTimedOut) {
         if (silenceTimedOut) {
-            return "Keine Sensordaten empfangen";
+            return "sensor_data_timeout";
         }
         if (exc == null || exc.getMessage() == null) {
-            return "Sensor-Verbindung abgebrochen";
+            return "sensor_connection_aborted";
         }
         String raw = exc.getMessage().toLowerCase();
         if (raw.contains("read failed") || raw.contains("socket might closed") || raw.contains("read ret -1") || raw.contains("socket closed")) {
-            return "Sensor-Verbindung unterbrochen";
+            return "sensor_connection_interrupted";
         }
         if (raw.contains("connection refused") || raw.contains("connection reset") || raw.contains("broken pipe")) {
-            return "Sensor antwortet nicht";
+            return "sensor_unresponsive";
         }
         if (raw.contains("timeout") || raw.contains("timed out")) {
-            return "Zeitüberschreitung bei der Verbindung";
+            return "connection_timeout";
         }
-        return "Sensor-Verbindung unterbrochen";
+        return "sensor_connection_interrupted";
     }
 }
