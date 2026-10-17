@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +46,7 @@ fun TopBar(
     statusText: String,
     isConnected: Boolean,
     onSettingsClick: () -> Unit,
+    onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
@@ -66,7 +71,7 @@ fun TopBar(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Feinstaub",
+                    text = stringResource(R.string.app_name),
                     maxLines = 1,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
@@ -78,6 +83,13 @@ fun TopBar(
         },
         actions = {
             StatusPill(statusText = statusText, isConnected = isConnected)
+            IconButton(onClick = onAboutClick) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = stringResource(R.string.action_about),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
             IconButton(onClick = onSettingsClick) {
                 GearIcon(MaterialTheme.colorScheme.onSurface)
             }

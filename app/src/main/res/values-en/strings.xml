@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Particulate Matter</string>
+    <string name="app_subtitle">SDS011 Native</string>
+
+    <!-- Top Bar & Navigation -->
+    <string name="status_connected">connected</string>
+    <string name="status_connected_simulated">connected (simulated)</string>
+    <string name="status_connecting">connecting …</string>
+    <string name="status_disconnected">disconnected</string>
+    <string name="status_connection_lost">connection lost</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_about">About App</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_connect">Connect</string>
+
+    <!-- Live Values Card -->
+    <string name="card_live_title">Current Readings</string>
+    <string name="unit_pm">µg/m³</string>
+    <string name="aqi_good">good</string>
+    <string name="aqi_elevated">elevated</string>
+    <string name="aqi_high">high</string>
+    <string name="aqi_none">no value</string>
+    <string name="no_sensor">No sensor connected</string>
+    <string name="waiting_first_reading">Waiting for first reading …</string>
+    <string name="reading_age_live">live · just now</string>
+    <string name="reading_age_seconds">last value %d s ago</string>
+    <string name="sensor_paused">Sensor paused · next reading in %s</string>
+    <string name="levels_explanation">What do the levels mean?</string>
+
+    <!-- Sensor Connection Card -->
+    <string name="card_sensor_title">Sensor Connection</string>
+    <string name="label_select_device">Bluetooth Device</string>
+    <string name="reload_devices">Reload devices</string>
+    <string name="simulated_device_name">SDS011 simulated</string>
+    <string name="no_paired_devices">No paired devices</string>
+
+    <!-- Chart Card -->
+    <string name="card_chart_title">History Plot</string>
+    <string name="series_means">Averages</string>
+    <string name="series_raw">Raw Values</string>
+    <string name="range_10m">10 min</string>
+    <string name="range_1h">1 h</string>
+    <string name="range_6h">6 h</string>
+    <string name="range_all">All</string>
+    <string name="clear_plot">Clear plot</string>
+    <string name="chart_insufficient_data">Not enough data points yet</string>
+
+    <!-- Measurement Card -->
+    <string name="card_measurement_title">Measurement Task</string>
+    <string name="mode_observe_title">Observe</string>
+    <string name="mode_observe_desc">Display and plot only, nothing is saved</string>
+    <string name="mode_trip_title">Trip Recording</string>
+    <string name="mode_trip_desc">On the go: GPS track (KML) and CSV</string>
+    <string name="mode_local_title">Local</string>
+    <string name="mode_local_desc">At a location: CSV with place name</string>
+     general
+    <string name="mode_stationary_title">Stationary</string>
+    <string name="mode_stationary_desc">Upload to sensor.community with every new average, plus CSV</string>
+    <string name="badge_public">public</string>
+
+    <string name="interval_title">Averaging Interval</string>
+    <string name="start_measurement">Start %s</string>
+    <string name="stop_measurement">Stop</string>
+
+    <!-- About Dialog & Hardware Wiring -->
+    <string name="about_title">About SDS011 Native</string>
+    <string name="about_tab_info">General</string>
+    <string name="about_tab_hardware">Hardware &amp; Setup</string>
+    <string name="about_tab_license">Licenses</string>
+
+    <string name="about_app_desc">Native Android app for mobile particulate matter measurement using the SDS011 laser dust sensor over Bluetooth Classic (HC-05/HC-06).</string>
+    <string name="about_disclaimer_title">Disclaimer</string>
+    <string name="about_disclaimer_text">The displayed measurement values are for informational purposes only. The developer assumes no liability for the accuracy of the data or damages caused by malfunctions.</string>
+
+    <string name="hardware_wiring_title">Sensor &amp; Bluetooth Wiring</string>
+    <string name="hardware_wiring_text">The SDS011 particulate matter sensor is connected to the Android smartphone via a serial Bluetooth module (HC-05 or HC-06):\n\n• SDS011 TX ➔ HC-06 RX\n• SDS011 RX ➔ HC-06 TX\n• SDS011 5V ➔ 5V Power Supply (Powerbank / USB)\n• SDS011 GND ➔ GND\n\nBefore connecting for the first time, pair the HC-05/HC-06 module once in Android Bluetooth settings (pairing PIN is usually 1234 or 0000).</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme_title">Appearance</string>
+    <string name="settings_language_title">Language</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="lang_system">System</string>
+    <string name="lang_de">Deutsch</string>
+    <string name="lang_en">English</string>
+</resources>

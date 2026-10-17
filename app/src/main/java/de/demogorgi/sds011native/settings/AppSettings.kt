@@ -13,12 +13,17 @@ data class AppSettings(
     val sensorLon: Double = 6.781089,
     val maxDistanceM: Int = 500,
     val uploadEnabled: Boolean = true,
-    val themeMode: Int = THEME_SYSTEM
+    val themeMode: Int = THEME_SYSTEM,
+    val languageMode: Int = LANG_SYSTEM
 ) {
     companion object {
         const val THEME_SYSTEM = 0
         const val THEME_LIGHT = 1
         const val THEME_DARK = 2
+
+        const val LANG_SYSTEM = 0
+        const val LANG_DE = 1
+        const val LANG_EN = 2
     }
 
     fun distanceTo(lat: Double, lon: Double): Double {
@@ -43,7 +48,8 @@ class SettingsStore(context: Context) {
             sensorLon = prefs.getString("lon", null)?.toDoubleOrNull() ?: d.sensorLon,
             maxDistanceM = prefs.getInt("maxDistanceM", d.maxDistanceM),
             uploadEnabled = prefs.getBoolean("uploadEnabled", d.uploadEnabled),
-            themeMode = prefs.getInt("themeMode", d.themeMode)
+            themeMode = prefs.getInt("themeMode", d.themeMode),
+            languageMode = prefs.getInt("languageMode", d.languageMode)
         )
     }
 
@@ -55,6 +61,7 @@ class SettingsStore(context: Context) {
             .putInt("maxDistanceM", s.maxDistanceM)
             .putBoolean("uploadEnabled", s.uploadEnabled)
             .putInt("themeMode", s.themeMode)
+            .putInt("languageMode", s.languageMode)
             .apply()
     }
 }

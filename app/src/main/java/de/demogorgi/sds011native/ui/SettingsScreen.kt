@@ -35,9 +35,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import de.demogorgi.sds011native.R
 import de.demogorgi.sds011native.settings.AppSettings
 import de.demogorgi.sds011native.ui.components.SegmentedChoice
 import java.util.Locale
@@ -74,7 +76,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Einstellungen", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
@@ -97,15 +99,34 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Darstellung", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    Text(stringResource(R.string.settings_theme_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                     SegmentedChoice(
                         options = listOf(
-                            AppSettings.THEME_SYSTEM to "System",
-                            AppSettings.THEME_LIGHT to "Hell",
-                            AppSettings.THEME_DARK to "Dunkel"
+                            AppSettings.THEME_SYSTEM to stringResource(R.string.theme_system),
+                            AppSettings.THEME_LIGHT to stringResource(R.string.theme_light),
+                            AppSettings.THEME_DARK to stringResource(R.string.theme_dark)
                         ),
                         selected = settings.themeMode,
                         onSelected = { onSave(settings.copy(themeMode = it)) }
+                    )
+                }
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.settings_language_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    SegmentedChoice(
+                        options = listOf(
+                            AppSettings.LANG_SYSTEM to stringResource(R.string.lang_system),
+                            AppSettings.LANG_DE to stringResource(R.string.lang_de),
+                            AppSettings.LANG_EN to stringResource(R.string.lang_en)
+                        ),
+                        selected = settings.languageMode,
+                        onSelected = { onSave(settings.copy(languageMode = it)) }
                     )
                 }
             }

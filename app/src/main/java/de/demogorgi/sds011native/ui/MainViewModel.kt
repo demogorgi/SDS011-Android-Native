@@ -209,6 +209,10 @@ class MainViewModel : ViewModel(), SensorConnection.Listener {
         _uiState.update { it.copy(showSettings = show) }
     }
 
+    fun showAbout(show: Boolean) {
+        _uiState.update { it.copy(showAbout = show) }
+    }
+
     fun startGps(context: Context) {
         gps.start(context)
     }

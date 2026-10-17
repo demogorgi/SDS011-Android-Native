@@ -1,4 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SDS011 Native</string>
+    <string name="app_name">Feinstaub</string>
+    <string name="app_subtitle">SDS011 Native</string>
+
+    <!-- Top Bar & Navigation -->
+    <string name="status_connected">verbunden</string>
+    <string name="status_connected_simulated">verbunden (simuliert)</string>
+    <string name="status_connecting">verbinde …</string>
+    <string name="status_disconnected">getrennt</string>
+    <string name="status_connection_lost">Verbindung verloren</string>
+    <string name="action_settings">Einstellungen</string>
+    <string name="action_about">Über die App</string>
+    <string name="action_disconnect">Trennen</string>
+    <string name="action_connect">Verbinden</string>
+
+    <!-- Live Values Card -->
+    <string name="card_live_title">Aktuelle Messwerte</string>
+    <string name="unit_pm">µg/m³</string>
+    <string name="aqi_good">gut</string>
+    <string name="aqi_elevated">erhöht</string>
+    <string name="aqi_high">hoch</string>
+    <string name="aqi_none">kein Wert</string>
+    <string name="no_sensor">Kein Sensor verbunden</string>
+    <string name="waiting_first_reading">Warte auf ersten Messwert …</string>
+    <string name="reading_age_live">live · gerade eben</string>
+    <string name="reading_age_seconds">letzter Wert vor %d s</string>
+    <string name="sensor_paused">Sensor pausiert · nächste Messung in %s</string>
+    <string name="levels_explanation">Was bedeuten die Stufen?</string>
+
+    <!-- Sensor Connection Card -->
+    <string name="card_sensor_title">Sensor Verbindung</string>
+    <string name="label_select_device">Bluetooth-Gerät</string>
+    <string name="reload_devices">Geräte neu laden</string>
+    <string name="simulated_device_name">SDS011 simuliert</string>
+    <string name="no_paired_devices">Keine gekoppelten Geräte</string>
+
+    <!-- Chart Card -->
+    <string name="card_chart_title">Verlaufsdiagramm</string>
+    <string name="series_means">Mittelwerte</string>
+    <string name="series_raw">Rohwerte</string>
+    <string name="range_10m">10 min</string>
+    <string name="range_1h">1 h</string>
+    <string name="range_6h">6 h</string>
+    <string name="range_all">Alles</string>
+    <string name="clear_plot">Plot leeren</string>
+    <string name="chart_insufficient_data">Noch nicht genügend Datenpunkte</string>
+
+    <!-- Measurement Card -->
+    <string name="card_measurement_title">Messauftrag</string>
+    <string name="mode_observe_title">Beobachten</string>
+    <string name="mode_observe_desc">Nur anzeigen und zeichnen, nichts wird gespeichert</string>
+    <string name="mode_trip_title">Messfahrt</string>
+    <string name="mode_trip_desc">Unterwegs: GPS-Spur (KML) und CSV</string>
+    <string name="mode_local_title">Lokal</string>
+    <string name="mode_local_desc">An einem Ort: CSV mit Ortsname</string>
+    <string name="mode_stationary_title">Stationär</string>
+    <string name="mode_stationary_desc">Upload zu sensor.community mit jedem neuen Mittelwert, dazu CSV</string>
+    <string name="badge_public">öffentlich</string>
+
+    <string name="interval_title">Mittelwert-Takt</string>
+    <string name="start_measurement">%s starten</string>
+    <string name="stop_measurement">Stoppen</string>
+
+    <!-- About Dialog & Hardware Wiring -->
+    <string name="about_title">Über Feinstaub SDS011</string>
+    <string name="about_tab_info">Allgemein</string>
+    <string name="about_tab_hardware">Hardware &amp; Aufbau</string>
+    <string name="about_tab_license">Lizenzen</string>
+
+    <string name="about_app_desc">Native Android-App zur mobilen Feinstaubmessung mit dem SDS011 Laser-Feinstaubsensor über Bluetooth Classic (HC-05/HC-06).</string>
+    <string name="about_disclaimer_title">Haftungsausschluss</string>
+    <string name="about_disclaimer_text">Die angezeigten Messwerte dienen ausschließlich Informationszwecken. Der Entwickler übernimmt keine Haftung für die Richtigkeit der Daten oder Schäden durch Fehlfunktionen.</string>
+
+    <string name="hardware_wiring_title">Sensor &amp; Bluetooth Verdrahtung</string>
+    <string name="hardware_wiring_text">Der SDS011 Feinstaubsensor wird über ein serielles Bluetooth-Modul (HC-05 oder HC-06) mit dem Android-Smartphone verbunden:\n\n• SDS011 TX ➔ HC-06 RX\n• SDS011 RX ➔ HC-06 TX\n• SDS011 5V ➔ 5V Stromversorgung (Powerbank / USB)\n• SDS011 GND ➔ GND\n\nVor der ersten Verbindung muss das HC-05/HC-06 Modul einmalig in den Android Bluetooth-Einstellungen gekoppelt werden (Kopplungs-PIN meist 1234 oder 0000).</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_theme_title">Darstellung</string>
+    <string name="settings_language_title">Sprache / Language</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="lang_system">System</string>
+    <string name="lang_de">Deutsch</string>
+    <string name="lang_en">English</string>
 </resources>

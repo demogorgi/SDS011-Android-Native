@@ -93,6 +93,7 @@ data class MainUiState(
 
     val settings: AppSettings = AppSettings(),
     val showSettings: Boolean = false,
+    val showAbout: Boolean = false,
 
     val tripName: String = "",
     val placeName: String = "",
