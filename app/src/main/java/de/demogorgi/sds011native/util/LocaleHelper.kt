@@ -2,6 +2,7 @@ package de.demogorgi.sds011native.util
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Resources
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -15,9 +16,13 @@ object LocaleHelper {
         return when (languageMode) {
             AppSettings.LANG_DE -> Locale.GERMAN
             AppSettings.LANG_EN -> Locale.ENGLISH
-            else -> Locale.getDefault()
+            else -> systemLocale()
         }
     }
+
+    @Suppress("DEPRECATION")
+    private fun systemLocale(): Locale =
+        Resources.getSystem().configuration.locale
 
     fun updateContextLocale(context: Context, languageMode: Int): Context {
         val targetLocale = getLocale(languageMode)
