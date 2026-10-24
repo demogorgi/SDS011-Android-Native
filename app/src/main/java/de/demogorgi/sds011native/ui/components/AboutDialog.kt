@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,11 +44,24 @@ fun AboutDialog(
     onDismiss: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
     val tabs = listOf(
-        stringResource(R.string.about_tab_info),
-        stringResource(R.string.about_tab_hardware),
-        stringResource(R.string.about_tab_license)
+        context.getString(R.string.about_tab_info),
+        context.getString(R.string.about_tab_hardware),
+        context.getString(R.string.about_tab_license)
     )
+    val logoDescription = context.getString(R.string.app_logo_description)
+    val aboutTitle = context.getString(R.string.about_title)
+    val versionText = context.getString(R.string.app_version, appVersionName())
+    val closeText = context.getString(R.string.action_close)
+    val appDescription = context.getString(R.string.about_app_desc)
+    val disclaimerTitle = context.getString(R.string.about_disclaimer_title)
+    val disclaimerText = context.getString(R.string.about_disclaimer_text)
+    val hardwareTitle = context.getString(R.string.hardware_wiring_title)
+    val hardwareText = context.getString(R.string.hardware_wiring_text)
+    val licenseText = context.getString(R.string.about_license_text)
+    val openSourceTitle = context.getString(R.string.about_open_source)
+    val creditsText = context.getString(R.string.about_credits)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -62,18 +74,18 @@ fun AboutDialog(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = stringResource(R.string.app_logo_description),
+                        contentDescription = logoDescription,
                         modifier = Modifier.size(36.dp)
                     )
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text(
-                        stringResource(R.string.about_title),
+                        aboutTitle,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        stringResource(R.string.app_version, appVersionName()),
+                        versionText,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -100,16 +112,16 @@ fun AboutDialog(
                         .verticalScroll(rememberScrollState())
                 ) {
                     when (selectedTab) {
-                        0 -> GeneralInfoTab()
-                        1 -> HardwareWiringTab()
-                        2 -> LicensesTab()
+                        0 -> GeneralInfoTab(appDescription, disclaimerTitle, disclaimerText)
+                        1 -> HardwareWiringTab(hardwareTitle, hardwareText)
+                        2 -> LicensesTab(licenseText, openSourceTitle, creditsText)
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
+                Text(closeText)
             }
         }
     )
@@ -126,10 +138,14 @@ private fun appVersionName(): String {
 }
 
 @Composable
-private fun GeneralInfoTab() {
+private fun GeneralInfoTab(
+    appDescription: String,
+    disclaimerTitle: String,
+    disclaimerText: String
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            stringResource(R.string.about_app_desc),
+            appDescription,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -141,13 +157,13 @@ private fun GeneralInfoTab() {
         ) {
             Column(Modifier.padding(12.dp)) {
                 Text(
-                    stringResource(R.string.about_disclaimer_title),
+                    disclaimerTitle,
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.about_disclaimer_text),
+                    disclaimerText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -157,10 +173,10 @@ private fun GeneralInfoTab() {
 }
 
 @Composable
-private fun HardwareWiringTab() {
+private fun HardwareWiringTab(title: String, text: String) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            stringResource(R.string.hardware_wiring_title),
+            title,
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -171,7 +187,7 @@ private fun HardwareWiringTab() {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                stringResource(R.string.hardware_wiring_text),
+                text,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)
@@ -181,10 +197,10 @@ private fun HardwareWiringTab() {
 }
 
 @Composable
-private fun LicensesTab() {
+private fun LicensesTab(licenseText: String, openSourceTitle: String, creditsText: String) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            stringResource(R.string.about_license_text).substringBefore("\n\n"),
+            licenseText.substringBefore("\n\n"),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -196,7 +212,7 @@ private fun LicensesTab() {
         ) {
             Column(Modifier.padding(12.dp)) {
                 Text(
-                    stringResource(R.string.about_license_text).substringAfter("\n\n"),
+                    licenseText.substringAfter("\n\n"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -204,12 +220,12 @@ private fun LicensesTab() {
         }
 
         Text(
-            stringResource(R.string.about_open_source),
+            openSourceTitle,
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            stringResource(R.string.about_credits),
+            creditsText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

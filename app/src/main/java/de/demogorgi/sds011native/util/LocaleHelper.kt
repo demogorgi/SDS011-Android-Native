@@ -6,6 +6,7 @@ import android.content.res.Resources
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import de.demogorgi.sds011native.settings.AppSettings
 import java.util.Locale
@@ -41,12 +42,16 @@ fun LocalizedContent(
     content: @Composable () -> Unit
 ) {
     val currentContext = LocalContext.current
-    val localizedContext = remember(languageMode) {
+    val localizedContext = remember(currentContext, languageMode) {
         LocaleHelper.updateContextLocale(currentContext, languageMode)
+    }
+    val localizedConfiguration = remember(localizedContext) {
+        localizedContext.resources.configuration
     }
 
     CompositionLocalProvider(
         LocalContext provides localizedContext,
+        LocalConfiguration provides localizedConfiguration,
         content = content
     )
 }
